@@ -17,27 +17,9 @@ export default {
       });
     }
 
-    const isManifest = targetUrl.includes(".m3u8");
-    const isSegment = targetUrl.includes(".ts") || targetUrl.includes(".m4s");
-
     const forwardHeaders = new Headers();
     forwardHeaders.set("User-Agent", "ReactNativeVideo/9.11.1 (Linux;Android 13) AndroidXMedia3/1.6.1");
     forwardHeaders.set("Referer", "https://fancode.com/");
-    forwardHeaders.set("Origin", "https://fancode.com");
-
-    // Check Cloudflare Cache for video segments to prevent buffering/origin bans
-    const cache = caches.default;
-    const cacheKey = new Request(targetUrl, request);
-    
-    if (isSegment) {
-      const cachedResponse = await cache.match(cacheKey);
-      if (cachedResponse) {
-        const response = new Response(cachedResponse.body, cachedResponse);
-        response.headers.set("Access-Control-Allow-Origin", "*");
-        response.headers.set("X-Proxy-Cache", "HIT");
-        return response;
-      }
-    }
 
     try {
       const response = await fetch(targetUrl, {
@@ -45,43 +27,42 @@ export default {
         headers: forwardHeaders,
       });
 
-      // Rewrite the manifest to proxy internal segments
-      if (isManifest) {
-        let manifest = await response.text();
-        const baseUrl = targetUrl.substring(0, targetUrl.lastIndexOf("/") + 1);
+      const contentType = response.headers.get("content-type") || "";
+      const isManifest = contentType.includes("mpegurl") || targetUrl.includes(".m3u8");
 
-        manifest = manifest
+      if (isManifest) {
+        const manifestText = await response.text();
+        
+        const rewrittenManifest = manifestText
           .split("\n")
           .map((line) => {
             const trimmed = line.trim();
             if (trimmed && !trimmed.startsWith("#")) {
-              const absoluteUrl = trimmed.startsWith("http") ? trimmed : baseUrl + trimmed;
-              return `${url.origin}/?url=${encodeURIComponent(absoluteUrl)}`;
+              try {
+                // This safely resolves any relative chunk paths against the parent URL
+                const absoluteUrl = new URL(trimmed, targetUrl).href;
+                return `${url.origin}/?url=${encodeURIComponent(absoluteUrl)}`;
+              } catch (e) {
+                return line;
+              }
             }
             return line;
           })
           .join("\n");
 
-        return new Response(manifest, {
+        return new Response(rewrittenManifest, {
           status: response.status,
           headers: {
             "Content-Type": "application/vnd.apple.mpegurl",
             "Access-Control-Allow-Origin": "*",
-            "Cache-Control": "no-cache, no-store, must-revalidate", // Never cache manifest
+            "Cache-Control": "no-store",
           },
         });
       }
 
-      // Serve and cache the video chunks
-      const segmentResponse = new Response(response.body, response);
-      segmentResponse.headers.set("Access-Control-Allow-Origin", "*");
-      segmentResponse.headers.set("Cache-Control", "public, max-age=3600"); // Cache chunks for 1 hour
-
-      if (isSegment && response.status === 200) {
-        ctx.waitUntil(cache.put(cacheKey, segmentResponse.clone()));
-      }
-
-      return segmentResponse;
+      const mediaResponse = new Response(response.body, response);
+      mediaResponse.headers.set("Access-Control-Allow-Origin", "*");
+      return mediaResponse;
     } catch (err) {
       return new Response(err.message, { status: 500 });
     }
