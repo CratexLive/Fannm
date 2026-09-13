@@ -6,53 +6,23 @@
     <title>Live Player</title>
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <style>
-        body { margin: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: system-ui, -apple-system, sans-serif; }
-        .player-wrapper { width: 100%; max-width: 800px; position: relative; }
-        
-        /* Diagnostic UI Styles */
-        #error-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 15, 15, 0.95); z-index: 100; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; box-sizing: border-box; }
-        .error-icon { font-size: 48px; margin-bottom: 15px; }
-        .error-title { color: #ff4757; font-size: 22px; font-weight: bold; margin: 0 0 10px 0; }
-        .error-desc { color: #dfe4ea; font-size: 15px; max-width: 600px; margin: 0 0 15px 0; line-height: 1.5; }
-        .error-solution { background: #2f3542; color: #a4b0be; padding: 12px 18px; border-radius: 6px; font-size: 14px; max-width: 600px; border-left: 4px solid #1e90ff; text-align: left; }
-        .error-code { font-family: monospace; background: #000; padding: 2px 6px; border-radius: 4px; color: #ff6b81; }
+        body { margin: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .player-wrapper { width: 100%; max-width: 800px; }
     </style>
 </head>
 <body>
     <div class="player-wrapper">
+        <!-- Added 'muted' so mobile browsers do not block the video from starting -->
         <video id="player" controls crossorigin playsinline muted></video>
-        
-        <!-- Error Overlay -->
-        <div id="error-overlay">
-            <div class="error-icon">⚠️</div>
-            <h2 class="error-title" id="e-title">Stream Error</h2>
-            <p class="error-desc" id="e-desc">Detecting issue...</p>
-            <div class="error-solution" id="e-solution">
-                <strong>Solution:</strong> <span id="e-sol-text">Please wait...</span>
-            </div>
-        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15"></script>
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <script>
         const video = document.getElementById('player');
-        const overlay = document.getElementById('error-overlay');
-        const eTitle = document.getElementById('e-title');
-        const eDesc = document.getElementById('e-desc');
-        const eSolText = document.getElementById('e-sol-text');
-        
-        // PASTE YOUR FRESH FANCODE LINK HERE
         const streamUrl = "https://dai-fancode.pages.dev/mumbai/4248312_english_hls_72d930b34b31875_1ta-di_h264/index.m3u8";
         
         const source = `/?url=${encodeURIComponent(streamUrl)}`;
-
-        function displayError(title, desc, solution) {
-            eTitle.innerHTML = title;
-            eDesc.innerHTML = desc;
-            eSolText.innerHTML = solution;
-            overlay.style.display = 'flex';
-        }
 
         if (Hls.isSupported()) {
             const hls = new Hls({
@@ -70,43 +40,6 @@
                     controls: ['play-large', 'play', 'mute', 'volume', 'settings', 'fullscreen']
                 });
                 player.play();
-            });
-
-            // ADDED: Advanced Error Detection
-            hls.on(Hls.Events.ERROR, (event, data) => {
-                if (data.fatal) {
-                    switch (data.type) {
-                        case Hls.ErrorTypes.NETWORK_ERROR:
-                            const status = data.response ? data.response.code : 'Unknown';
-                            if (status === 403) {
-                                displayError(
-                                    "Access Denied <span class='error-code'>(HTTP 403)</span>",
-                                    "The streaming server rejected the request. The token in your FanCode URL has expired.",
-                                    "Get a fresh <code>.m3u8</code> link from the source and update your HTML code."
-                                );
-                            } else if (status === 404) {
-                                displayError(
-                                    "Stream Not Found <span class='error-code'>(HTTP 404)</span>",
-                                    "The requested stream file does not exist.",
-                                    "The live event has ended, or the URL is incorrect."
-                                );
-                            } else {
-                                displayError(
-                                    `Network Failure <span class='error-code'>(Status: ${status})</span>`,
-                                    `Failed to load segment.`,
-                                    "Check your internet connection or try a different stream."
-                                );
-                            }
-                            hls.destroy();
-                            break;
-                        case Hls.ErrorTypes.MEDIA_ERROR:
-                            hls.recoverMediaError();
-                            break;
-                        default:
-                            hls.destroy();
-                            break;
-                    }
-                }
             });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
             video.src = source;
