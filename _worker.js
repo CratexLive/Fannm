@@ -27,14 +27,6 @@ export default {
         headers: forwardHeaders,
       });
 
-      // ADDED: Pass HTTP errors to the frontend so the player can display them
-      if (!response.ok && response.status !== 200) {
-        return new Response(await response.text(), {
-          status: response.status,
-          headers: { "Access-Control-Allow-Origin": "*" }
-        });
-      }
-
       const contentType = response.headers.get("content-type") || "";
       const isManifest = contentType.includes("mpegurl") || targetUrl.includes(".m3u8");
 
@@ -47,6 +39,7 @@ export default {
             const trimmed = line.trim();
             if (trimmed && !trimmed.startsWith("#")) {
               try {
+                // This safely resolves any relative chunk paths against the parent URL
                 const absoluteUrl = new URL(trimmed, targetUrl).href;
                 return `${url.origin}/?url=${encodeURIComponent(absoluteUrl)}`;
               } catch (e) {
@@ -71,7 +64,7 @@ export default {
       mediaResponse.headers.set("Access-Control-Allow-Origin", "*");
       return mediaResponse;
     } catch (err) {
-      return new Response(err.message, { status: 502, headers: { "Access-Control-Allow-Origin": "*" } });
+      return new Response(err.message, { status: 500 });
     }
   },
 };
