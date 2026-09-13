@@ -19,13 +19,13 @@ export default {
     }
 
     const headers = new Headers();
-    headers.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36");
+    headers.set("User-Agent", "ReactNativeVideo/9.11.1 (Linux;Android 13) AndroidXMedia3/1.6.1");
     if (referer) headers.set("Referer", referer);
 
     try {
       const response = await fetch(targetUrl, { method: request.method, headers });
-      
-      // If the source blocks the request, pass the error code to the frontend player
+
+      // Pass HTTP errors to the frontend for the diagnostic UI
       if (!response.ok && response.status !== 200) {
         return new Response(await response.text(), {
           status: response.status,
