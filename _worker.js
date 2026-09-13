@@ -39,7 +39,6 @@ export default {
             const trimmed = line.trim();
             if (trimmed && !trimmed.startsWith("#")) {
               try {
-                // This safely resolves any relative chunk paths against the parent URL
                 const absoluteUrl = new URL(trimmed, targetUrl).href;
                 return `${url.origin}/?url=${encodeURIComponent(absoluteUrl)}`;
               } catch (e) {
