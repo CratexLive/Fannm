@@ -3,53 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Player</title>
+    <title>Premium Lite Player</title>
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <style>
-        body { margin: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .player-wrapper { width: 100%; max-width: 800px; }
+        body { margin: 0; background-color: #0c0c0c; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: system-ui, -apple-system, sans-serif; }
+        .player-wrapper { width: 100%; max-width: 850px; position: relative; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); background: #000; }
+        
+        /* Custom Diagnostic UI */
+        #error-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 15, 15, 0.95); z-index: 100; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; box-sizing: border-box; }
+        .error-icon { font-size: 48px; margin-bottom: 15px; }
+        .error-title { color: #ff4757; font-size: 22px; font-weight: bold; margin: 0 0 10px 0; }
+        .error-desc { color: #dfe4ea; font-size: 15px; max-width: 600px; margin: 0 0 15px 0; line-height: 1.5; }
+        .error-solution { background: #2f3542; color: #a4b0be; padding: 12px 18px; border-radius: 6px; font-size: 14px; max-width: 600px; border-left: 4px solid #1e90ff; text-align: left; }
+        .error-code { font-family: monospace; background: #000; padding: 2px 6px; border-radius: 4px; color: #ff6b81; }
     </style>
 </head>
 <body>
     <div class="player-wrapper">
         <video id="player" controls crossorigin playsinline muted></video>
+        
+        <!-- Error Overlay -->
+        <div id="error-overlay">
+            <div class="error-icon">⚠️</div>
+            <h2 class="error-title" id="e-title">Stream Error</h2>
+            <p class="error-desc" id="e-desc">Detecting issue...</p>
+            <div class="error-solution" id="e-solution">
+                <strong>Solution:</strong> <span id="e-sol-text">Please wait...</span>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15"></script>
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <script>
         const video = document.getElementById('player');
+        const overlay = document.getElementById('error-overlay');
+        const eTitle = document.getElementById('e-title');
+        const eDesc = document.getElementById('e-desc');
+        const eSolText = document.getElementById('e-sol-text');
         
-        // Define your new stream and referer here
+        // Define your stream parameters here
         const streamUrl = "https://xameleon.phantemlis.top/four/secure/0a76e947b73b1cf9bfc6e6adb373f315/1789277411/premium65/index.m3u8";
         const referer = "https://hamis.romponalis.st/premiumtv/daddy3.php?id=65";
         
-        // Pass both to the Cloudflare Worker
-        let source = `/?url=${encodeURIComponent(streamUrl)}`;
-        if (referer) source += `&referer=${encodeURIComponent(referer)}`;
+        const source = `/?url=${encodeURIComponent(streamUrl)}&referer=${encodeURIComponent(referer)}`;
+
+        function displayError(title, desc, solution) {
+            eTitle.innerHTML = title;
+            eDesc.innerHTML = desc;
+            eSolText.innerHTML = solution;
+            overlay.style.display = 'flex';
+        }
 
         if (Hls.isSupported()) {
-            const hls = new Hls({
-                enableWorker: true,
+            const hls = new Hls({ 
+                enableWorker: true, 
                 lowLatencyMode: true,
-                backBufferLength: 30
+                maxMaxBufferLength: 30
             });
-
+            
             hls.loadSource(source);
             hls.attachMedia(video);
             
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                const player = new Plyr(video, {
-                    autoplay: true,
-                    controls: ['play-large', 'play', 'mute', 'volume', 'settings', 'fullscreen']
-                });
-                player.play();
+                new Plyr(video, { autoplay: true }).play();
+            });
+
+            // Advanced Error Detection Engine
+            hls.on(Hls.Events.ERROR, (event, data) => {
+                if (data.fatal) {
+                    switch (data.type) {
+                        case Hls.ErrorTypes.NETWORK_ERROR:
+                            const status = data.response ? data.response.code : 'Unknown';
+                            
+                            if (status === 403) {
+                                displayError(
+                                    "Access Denied <span class='error-code'>(HTTP 403)</span>",
+                                    "The server actively rejected the request. The temporary token in the URL has expired, or the streaming server has locked the stream to your home IP address (blocking Cloudflare).",
+                                    "Extract a fresh <code>.m3u8</code> link from the source website right now. If it still fails, the server is using IP-binding, which means it cannot be proxied through Cloudflare."
+                                );
+                            } else if (status === 404) {
+                                displayError(
+                                    "Stream Not Found <span class='error-code'>(HTTP 404)</span>",
+                                    "The requested stream file does not exist on the server.",
+                                    "The live event has likely ended, or the URL is incorrect/outdated. Obtain a new stream link."
+                                );
+                            } else if (status === 502) {
+                                displayError(
+                                    "Bad Gateway <span class='error-code'>(HTTP 502)</span>",
+                                    "The Cloudflare proxy failed to connect to the streaming server.",
+                                    "The source server might be down or actively blocking proxy connections. Try again later."
+                                );
+                            } else {
+                                displayError(
+                                    `Network Failure <span class='error-code'>(Status: ${status})</span>`,
+                                    `Failed to load segment: <code>${data.details}</code>`,
+                                    "Check your internet connection. If the issue persists, the stream source is unstable."
+                                );
+                            }
+                            hls.destroy();
+                            break;
+                            
+                        case Hls.ErrorTypes.MEDIA_ERROR:
+                            console.warn("Media error detected, attempting to recover...");
+                            hls.recoverMediaError();
+                            break;
+                            
+                        default:
+                            displayError(
+                                "Playback Error",
+                                `An unexpected error occurred: <code>${data.details}</code>`,
+                                "Reload the page or try a different stream."
+                            );
+                            hls.destroy();
+                            break;
+                    }
+                }
             });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
             video.src = source;
             video.addEventListener('loadedmetadata', () => {
-                const player = new Plyr(video, { autoplay: true });
-                player.play();
+                new Plyr(video, { autoplay: true }).play();
             });
         }
     </script>
