@@ -1,1 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bufferless Live Player</title>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <style>
+        body { margin: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .player-wrapper { width: 100%; max-width: 800px; }
+    </style>
+</head>
+<body>
+    <div class="player-wrapper">
+        <video id="player" controls crossorigin playsinline></video>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15"></script>
+    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+    <script>
+        const video = document.getElementById('player');
+        const streamUrl = "https://dai-fancode.pages.dev/mumbai/4248312_english_hls_72d930b34b31875_1ta-di_h264/index.m3u8";
+        const source = `/?url=${encodeURIComponent(streamUrl)}`;
+
+        if (Hls.isSupported()) {
+            const hls = new Hls({
+                enableWorker: true,
+                lowLatencyMode: true,           // Enable Low-Latency HLS
+                backBufferLength: 30,           // Drop old data to prevent memory crashes
+                liveSyncDurationCount: 2,       // Target exactly 2 segments from the live edge
+                liveMaxLatencyDurationCount: 4, // Max allowed drift before forcing a jump to the edge
+                maxLiveSyncPlaybackRate: 1.5,   // Catch up silently by playing at 1.5x speed if lagging
+                maxBufferLength: 10,            // Limit forward buffer 
+                maxMaxBufferLength: 15
+            });
+
+            hls.loadSource(source);
+            hls.attachMedia(video);
+            
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                const player = new Plyr(video, {
+                    autoplay: true,
+                    controls: ['play-large', 'play', 'mute', 'volume', 'settings', 'fullscreen'],
+                    settings: ['quality']
+                });
+                player.play();
+            });
+
+            // Automatically recover if the stream stalls or hits an error
+            hls.on(Hls.Events.ERROR, (event, data) => {
+                if (data.fatal) {
+                    switch (data.type) {
+                        case Hls.ErrorTypes.NETWORK_ERROR:
+                            console.log('Network error, attempting to recover...');
+                            hls.startLoad();
+                            break;
+                        case Hls.ErrorTypes.MEDIA_ERROR:
+                            console.log('Media error, attempting to recover...');
+                            hls.recoverMediaError();
+                            break;
+                        default:
+                            hls.destroy();
+                            break;
+                    }
+                }
+            });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = source;
+            video.addEventListener('loadedmetadata', () => {
+                new Plyr(video);
+            });
+        }
+    </script>
+</body>
+</html>
 
