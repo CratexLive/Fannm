@@ -1,7 +1,8 @@
 export default {
-  async fetch(request, env, ctx) {
+  async fetch(request, env) {
     const url = new URL(request.url);
     const targetUrl = url.searchParams.get("url");
+    const referer = url.searchParams.get("referer");
 
     if (!targetUrl) {
       return env.ASSETS.fetch(request);
@@ -18,8 +19,11 @@ export default {
     }
 
     const forwardHeaders = new Headers();
-    forwardHeaders.set("User-Agent", "ReactNativeVideo/9.11.1 (Linux;Android 13) AndroidXMedia3/1.6.1");
-    forwardHeaders.set("Referer", "https://fancode.com/");
+    // Using a standard desktop User-Agent to maximize compatibility
+    forwardHeaders.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36");
+    if (referer) {
+      forwardHeaders.set("Referer", referer);
+    }
 
     try {
       const response = await fetch(targetUrl, {
@@ -39,9 +43,10 @@ export default {
             const trimmed = line.trim();
             if (trimmed && !trimmed.startsWith("#")) {
               try {
-                // This safely resolves any relative chunk paths against the parent URL
                 const absoluteUrl = new URL(trimmed, targetUrl).href;
-                return `${url.origin}/?url=${encodeURIComponent(absoluteUrl)}`;
+                let rewriteUrl = `${url.origin}/?url=${encodeURIComponent(absoluteUrl)}`;
+                if (referer) rewriteUrl += `&referer=${encodeURIComponent(referer)}`;
+                return rewriteUrl;
               } catch (e) {
                 return line;
               }
