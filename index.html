@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium Lite Player</title>
+    <title>Live Player</title>
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <style>
-        body { margin: 0; background-color: #0c0c0c; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: system-ui, -apple-system, sans-serif; }
-        .player-wrapper { width: 100%; max-width: 850px; position: relative; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); background: #000; }
+        body { margin: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: system-ui, -apple-system, sans-serif; }
+        .player-wrapper { width: 100%; max-width: 800px; position: relative; }
         
+        /* Diagnostic UI Styles */
         #error-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 15, 15, 0.95); z-index: 100; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; box-sizing: border-box; }
         .error-icon { font-size: 48px; margin-bottom: 15px; }
         .error-title { color: #ff4757; font-size: 22px; font-weight: bold; margin: 0 0 10px 0; }
@@ -21,6 +22,7 @@
     <div class="player-wrapper">
         <video id="player" controls crossorigin playsinline muted></video>
         
+        <!-- Error Overlay -->
         <div id="error-overlay">
             <div class="error-icon">⚠️</div>
             <h2 class="error-title" id="e-title">Stream Error</h2>
@@ -40,15 +42,10 @@
         const eDesc = document.getElementById('e-desc');
         const eSolText = document.getElementById('e-sol-text');
         
-        // --- CONFIGURE YOUR STREAM HERE ---
-        // 1. Paste the clean URL (Everything BEFORE the pipe | symbol)
-        const streamUrl = "https://dai-fancode.pages.dev/mumbai/YOUR_FRESH_TOKEN_HERE/index.m3u8";
+        // PASTE YOUR FRESH FANCODE LINK HERE
+        const streamUrl = "https://dai-fancode.pages.dev/mumbai/4248312_english_hls_72d930b34b31875_1ta-di_h264/index.m3u8";
         
-        // 2. Set the Referer from the pipe syntax (Everything AFTER Referer=)
-        const referer = "https://fancode.com/";
-        // ----------------------------------
-        
-        const source = `/?url=${encodeURIComponent(streamUrl)}&referer=${encodeURIComponent(referer)}`;
+        const source = `/?url=${encodeURIComponent(streamUrl)}`;
 
         function displayError(title, desc, solution) {
             eTitle.innerHTML = title;
@@ -58,19 +55,24 @@
         }
 
         if (Hls.isSupported()) {
-            const hls = new Hls({ 
-                enableWorker: true, 
+            const hls = new Hls({
+                enableWorker: true,
                 lowLatencyMode: true,
-                maxMaxBufferLength: 30
+                backBufferLength: 30
             });
-            
+
             hls.loadSource(source);
             hls.attachMedia(video);
             
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                new Plyr(video, { autoplay: true }).play();
+                const player = new Plyr(video, {
+                    autoplay: true,
+                    controls: ['play-large', 'play', 'mute', 'volume', 'settings', 'fullscreen']
+                });
+                player.play();
             });
 
+            // ADDED: Advanced Error Detection
             hls.on(Hls.Events.ERROR, (event, data) => {
                 if (data.fatal) {
                     switch (data.type) {
@@ -79,25 +81,19 @@
                             if (status === 403) {
                                 displayError(
                                     "Access Denied <span class='error-code'>(HTTP 403)</span>",
-                                    "The server rejected the request. The token has expired, or the stream is locked to your home IP address.",
-                                    "Get a fresh <code>.m3u8</code> link right now and update your code. If it still fails, the stream cannot be proxied through Cloudflare."
+                                    "The streaming server rejected the request. The token in your FanCode URL has expired.",
+                                    "Get a fresh <code>.m3u8</code> link from the source and update your HTML code."
                                 );
                             } else if (status === 404) {
                                 displayError(
                                     "Stream Not Found <span class='error-code'>(HTTP 404)</span>",
-                                    "The requested stream file does not exist on the server.",
-                                    "The live event has ended, or the URL is incorrect. Obtain a new stream link."
-                                );
-                            } else if (status === 502) {
-                                displayError(
-                                    "Bad Gateway <span class='error-code'>(HTTP 502)</span>",
-                                    "The proxy failed to connect to the streaming server.",
-                                    "The source server might be down or blocking connections. Try again later."
+                                    "The requested stream file does not exist.",
+                                    "The live event has ended, or the URL is incorrect."
                                 );
                             } else {
                                 displayError(
                                     `Network Failure <span class='error-code'>(Status: ${status})</span>`,
-                                    `Failed to load segment: <code>${data.details}</code>`,
+                                    `Failed to load segment.`,
                                     "Check your internet connection or try a different stream."
                                 );
                             }
@@ -107,7 +103,6 @@
                             hls.recoverMediaError();
                             break;
                         default:
-                            displayError("Playback Error", `An error occurred: <code>${data.details}</code>`, "Reload the page.");
                             hls.destroy();
                             break;
                     }
@@ -116,7 +111,8 @@
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
             video.src = source;
             video.addEventListener('loadedmetadata', () => {
-                new Plyr(video, { autoplay: true }).play();
+                const player = new Plyr(video, { autoplay: true });
+                player.play();
             });
         }
     </script>
