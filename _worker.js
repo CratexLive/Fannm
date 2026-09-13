@@ -18,45 +18,41 @@ export default {
       });
     }
 
-    const forwardHeaders = new Headers();
-    // Using a standard desktop User-Agent to maximize compatibility
-    forwardHeaders.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36");
-    if (referer) {
-      forwardHeaders.set("Referer", referer);
-    }
+    const headers = new Headers();
+    headers.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36");
+    if (referer) headers.set("Referer", referer);
 
     try {
-      const response = await fetch(targetUrl, {
-        method: request.method,
-        headers: forwardHeaders,
-      });
+      const response = await fetch(targetUrl, { method: request.method, headers });
+      
+      // If the source blocks the request, pass the error code to the frontend player
+      if (!response.ok && response.status !== 200) {
+        return new Response(await response.text(), {
+          status: response.status,
+          headers: { "Access-Control-Allow-Origin": "*" }
+        });
+      }
 
       const contentType = response.headers.get("content-type") || "";
       const isManifest = contentType.includes("mpegurl") || targetUrl.includes(".m3u8");
 
       if (isManifest) {
-        const manifestText = await response.text();
-        
-        const rewrittenManifest = manifestText
-          .split("\n")
-          .map((line) => {
-            const trimmed = line.trim();
-            if (trimmed && !trimmed.startsWith("#")) {
-              try {
-                const absoluteUrl = new URL(trimmed, targetUrl).href;
-                let rewriteUrl = `${url.origin}/?url=${encodeURIComponent(absoluteUrl)}`;
-                if (referer) rewriteUrl += `&referer=${encodeURIComponent(referer)}`;
-                return rewriteUrl;
-              } catch (e) {
-                return line;
-              }
+        const manifest = await response.text();
+        const rewritten = manifest.split("\n").map(line => {
+          const trimmed = line.trim();
+          if (trimmed && !trimmed.startsWith("#")) {
+            try {
+              const absUrl = new URL(trimmed, targetUrl).href;
+              return `${url.origin}/?url=${encodeURIComponent(absUrl)}${referer ? `&referer=${encodeURIComponent(referer)}` : ""}`;
+            } catch {
+              return line;
             }
-            return line;
-          })
-          .join("\n");
+          }
+          return line;
+        }).join("\n");
 
-        return new Response(rewrittenManifest, {
-          status: response.status,
+        return new Response(rewritten, {
+          status: 200,
           headers: {
             "Content-Type": "application/vnd.apple.mpegurl",
             "Access-Control-Allow-Origin": "*",
@@ -65,11 +61,11 @@ export default {
         });
       }
 
-      const mediaResponse = new Response(response.body, response);
-      mediaResponse.headers.set("Access-Control-Allow-Origin", "*");
-      return mediaResponse;
+      const mediaRes = new Response(response.body, response);
+      mediaRes.headers.set("Access-Control-Allow-Origin", "*");
+      return mediaRes;
     } catch (err) {
-      return new Response(err.message, { status: 500 });
+      return new Response(err.message, { status: 502, headers: { "Access-Control-Allow-Origin": "*" } });
     }
   },
 };
