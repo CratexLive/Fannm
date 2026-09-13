@@ -1,8 +1,7 @@
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const targetUrl = url.searchParams.get("url");
-    const referer = url.searchParams.get("referer");
 
     if (!targetUrl) {
       return env.ASSETS.fetch(request);
@@ -18,14 +17,17 @@ export default {
       });
     }
 
-    const headers = new Headers();
-    headers.set("User-Agent", "ReactNativeVideo/9.11.1 (Linux;Android 13) AndroidXMedia3/1.6.1");
-    if (referer) headers.set("Referer", referer);
+    const forwardHeaders = new Headers();
+    forwardHeaders.set("User-Agent", "ReactNativeVideo/9.11.1 (Linux;Android 13) AndroidXMedia3/1.6.1");
+    forwardHeaders.set("Referer", "https://fancode.com/");
 
     try {
-      const response = await fetch(targetUrl, { method: request.method, headers });
+      const response = await fetch(targetUrl, {
+        method: request.method,
+        headers: forwardHeaders,
+      });
 
-      // Pass HTTP errors to the frontend for the diagnostic UI
+      // ADDED: Pass HTTP errors to the frontend so the player can display them
       if (!response.ok && response.status !== 200) {
         return new Response(await response.text(), {
           status: response.status,
@@ -37,22 +39,26 @@ export default {
       const isManifest = contentType.includes("mpegurl") || targetUrl.includes(".m3u8");
 
       if (isManifest) {
-        const manifest = await response.text();
-        const rewritten = manifest.split("\n").map(line => {
-          const trimmed = line.trim();
-          if (trimmed && !trimmed.startsWith("#")) {
-            try {
-              const absUrl = new URL(trimmed, targetUrl).href;
-              return `${url.origin}/?url=${encodeURIComponent(absUrl)}${referer ? `&referer=${encodeURIComponent(referer)}` : ""}`;
-            } catch {
-              return line;
+        const manifestText = await response.text();
+        
+        const rewrittenManifest = manifestText
+          .split("\n")
+          .map((line) => {
+            const trimmed = line.trim();
+            if (trimmed && !trimmed.startsWith("#")) {
+              try {
+                const absoluteUrl = new URL(trimmed, targetUrl).href;
+                return `${url.origin}/?url=${encodeURIComponent(absoluteUrl)}`;
+              } catch (e) {
+                return line;
+              }
             }
-          }
-          return line;
-        }).join("\n");
+            return line;
+          })
+          .join("\n");
 
-        return new Response(rewritten, {
-          status: 200,
+        return new Response(rewrittenManifest, {
+          status: response.status,
           headers: {
             "Content-Type": "application/vnd.apple.mpegurl",
             "Access-Control-Allow-Origin": "*",
@@ -61,9 +67,9 @@ export default {
         });
       }
 
-      const mediaRes = new Response(response.body, response);
-      mediaRes.headers.set("Access-Control-Allow-Origin", "*");
-      return mediaRes;
+      const mediaResponse = new Response(response.body, response);
+      mediaResponse.headers.set("Access-Control-Allow-Origin", "*");
+      return mediaResponse;
     } catch (err) {
       return new Response(err.message, { status: 502, headers: { "Access-Control-Allow-Origin": "*" } });
     }
