@@ -6,12 +6,31 @@
     <title>Live Player</title>
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <style>
-        body { margin: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .player-wrapper { width: 100%; max-width: 800px; }
+        body { margin: 0; background-color: #111; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; }
+        
+        .controls-container { width: 100%; max-width: 800px; margin-bottom: 15px; display: flex; gap: 10px; padding: 0 10px; box-sizing: border-box; }
+        .controls-container input { flex: 1; padding: 12px; border-radius: 6px; border: none; background: #222; color: white; outline: none; }
+        .controls-container button { padding: 12px 24px; border-radius: 6px; border: none; background: #007bff; color: white; cursor: pointer; font-weight: bold; }
+        
+        .player-wrapper { width: 100%; max-width: 800px; position: relative; }
+        
+        /* Custom Brand Watermark */
+        .watermark { position: absolute; top: 20px; right: 25px; z-index: 10; opacity: 0.8; pointer-events: none; color: white; font-weight: bold; font-size: 24px; text-shadow: 2px 2px 4px rgba(0,0,0,0.9); }
+        
+        /* Error UI */
+        .error-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 20; justify-content: center; align-items: center; color: #ff4d4d; font-size: 18px; font-weight: bold; }
     </style>
 </head>
 <body>
+
+    <div class="controls-container">
+        <input type="text" id="streamInput" placeholder="Paste .m3u8 URL here..." value="https://dai-fancode.pages.dev/mumbai/4248312_english_hls_72d930b34b31875_1ta-di_h264/index.m3u8">
+        <button onclick="loadStream()">Play</button>
+    </div>
+
     <div class="player-wrapper">
+        <div class="watermark">CricXCrate</div>
+        <div class="error-overlay" id="errorOverlay">Stream Offline / Reconnecting...</div>
         <video id="player" controls crossorigin playsinline muted></video>
     </div>
 
@@ -19,34 +38,89 @@
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <script>
         const video = document.getElementById('player');
-        const streamUrl = "https://dai-fancode.pages.dev/mumbai/4248312_english_hls_72d930b34b31875_1ta-di_h264/index.m3u8";
+        const errorOverlay = document.getElementById('errorOverlay');
+        const inputElement = document.getElementById('streamInput');
         
-        const source = `/?url=${encodeURIComponent(streamUrl)}`;
+        // Must match the SECRET_KEY in worker.js
+        const AUTH_KEY = "cricxcrate"; 
+        
+        let hls;
+        let player;
 
-        if (Hls.isSupported()) {
-            const hls = new Hls({
-                enableWorker: true,
-                lowLatencyMode: true,
-                backBufferLength: 30
-            });
-
-            hls.loadSource(source);
-            hls.attachMedia(video);
-            
-            hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                const player = new Plyr(video, {
-                    autoplay: true,
-                    controls: ['play-large', 'play', 'mute', 'volume', 'settings', 'fullscreen']
-                });
-                player.play();
-            });
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = source;
-            video.addEventListener('loadedmetadata', () => {
-                const player = new Plyr(video, { autoplay: true });
-                player.play();
+        // Initialize Plyr with dynamic quality selector and keyboard shortcuts
+        function initPlayer(resolutions) {
+            if (player) player.destroy();
+            player = new Plyr(video, {
+                autoplay: true,
+                keyboard: { focused: true, global: true }, // Enables Space/F/M shortcuts
+                quality: {
+                    default: resolutions.length > 0 ? resolutions[0] : null,
+                    options: resolutions,
+                    forced: true,
+                    onChange: (newQuality) => {
+                        if (hls) {
+                            hls.levels.forEach((level, levelIndex) => {
+                                if (level.height === newQuality) hls.currentLevel = levelIndex;
+                            });
+                        }
+                    }
+                },
+                controls: ['play-large', 'play', 'mute', 'volume', 'settings', 'fullscreen']
             });
         }
+
+        function loadStream() {
+            const rawUrl = inputElement.value.trim();
+            if (!rawUrl) return;
+
+            // Appends auth key for the worker
+            const source = `/?url=${encodeURIComponent(rawUrl)}&key=${AUTH_KEY}`;
+            errorOverlay.style.display = 'none';
+
+            if (Hls.isSupported()) {
+                if (hls) hls.destroy();
+                
+                hls = new Hls({ enableWorker: true, lowLatencyMode: true, backBufferLength: 30 });
+                hls.loadSource(source);
+                hls.attachMedia(video);
+                
+                hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+                    // Extract available resolutions (1080, 720, etc.) for the quality menu
+                    const availableQualities = data.levels.map(l => l.height).sort((a, b) => b - a);
+                    initPlayer(availableQualities);
+                    video.play().catch(() => {});
+                });
+
+                // Error Handling Logic
+                hls.on(Hls.Events.ERROR, (event, data) => {
+                    if (data.fatal) {
+                        switch (data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                errorOverlay.innerText = "Network Error - Attempting to reconnect...";
+                                errorOverlay.style.display = 'flex';
+                                hls.startLoad();
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                hls.recoverMediaError();
+                                break;
+                            default:
+                                initPlayer([]);
+                                hls.destroy();
+                                errorOverlay.innerText = "Fatal Error - Stream unplayable";
+                                errorOverlay.style.display = 'flex';
+                                break;
+                        }
+                    }
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = source;
+                initPlayer([]);
+                video.addEventListener('loadedmetadata', () => { video.play().catch(() => {}); });
+            }
+        }
+
+        // Auto-load the default stream on startup
+        loadStream();
     </script>
 </body>
 </html>
