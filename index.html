@@ -12,7 +12,6 @@
 </head>
 <body>
     <div class="player-wrapper">
-        <!-- Added 'muted' so mobile browsers do not block the video from starting -->
         <video id="player" controls crossorigin playsinline muted></video>
     </div>
 
@@ -20,9 +19,14 @@
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <script>
         const video = document.getElementById('player');
-        const streamUrl = "https://dai-fancode.pages.dev/mumbai/4248312_english_hls_72d930b34b31875_1ta-di_h264/index.m3u8";
         
-        const source = `/?url=${encodeURIComponent(streamUrl)}`;
+        // Define your new stream and referer here
+        const streamUrl = "https://xameleon.phantemlis.top/four/secure/0a76e947b73b1cf9bfc6e6adb373f315/1789277411/premium65/index.m3u8";
+        const referer = "https://hamis.romponalis.st/premiumtv/daddy3.php?id=65";
+        
+        // Pass both to the Cloudflare Worker
+        let source = `/?url=${encodeURIComponent(streamUrl)}`;
+        if (referer) source += `&referer=${encodeURIComponent(referer)}`;
 
         if (Hls.isSupported()) {
             const hls = new Hls({
