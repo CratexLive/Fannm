@@ -3,12 +3,10 @@ export default {
     const url = new URL(request.url);
     const targetUrl = url.searchParams.get("url");
 
-    // 1. First, check if there is no targetUrl. If so, serve the HTML page.
     if (!targetUrl) {
       return env.ASSETS ? env.ASSETS.fetch(request) : new Response("Missing URL", { status: 400 });
     }
 
-    // 2. If there IS a targetUrl, require the authentication key.
     const authKey = url.searchParams.get("key");
     const SECRET_KEY = "cricxcrate"; 
     
@@ -38,7 +36,7 @@ export default {
         headers: forwardHeaders,
       });
 
-      const contentType = response.headers.get("content-type") || "";
+      const contentType = response.headers.get("content-content") || response.headers.get("content-type") || "";
       const isManifest = contentType.includes("mpegurl") || targetUrl.includes(".m3u8");
       const isTsChunk = targetUrl.includes(".ts");
 
