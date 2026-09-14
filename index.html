@@ -1,15 +1,14 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Player - Sky Sports F1</title>
+    <title>Live Player</title>
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <style>
-        body { margin: 0; background-color: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; }
+        body { margin: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; }
         .player-wrapper { width: 100%; max-width: 800px; }
-        .controls { margin-top: 20px; display: flex; gap: 15px; }
-        button { padding: 10px 20px; font-weight: bold; cursor: pointer; border: none; border-radius: 5px; background: #00AFFF; color: #000; }
     </style>
 </head>
 <body>
@@ -17,69 +16,38 @@
         <video id="player" controls crossorigin playsinline muted></video>
     </div>
 
-    <div class="controls">
-        <button onclick="loadStream(0)">Server 1</button>
-        <button onclick="loadStream(1)">Server 2 (Alt)</button>
-    </div>
-
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15"></script>
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <script>
         const video = document.getElementById('player');
-        let hlsInstance = null;
-        let plyrInstance = null;
+        const streamUrl = "https://dai-fancode.pages.dev/mumbai/4248679_english_hls_55e888c33f12582_1ta-di_h264/index.m3u8";
+        
+        const source = `/?url=${encodeURIComponent(streamUrl)}`;
 
-        const streams = [
-            {
-                url: "https://xameleon.phantemlis.top/two/secure/53715a9ab5aa8eee18365e000530db7d/1789387215/premium60/index.m3u8",
-                ref: "https://hamis.romponalis.st/premiumtv/daddy3.php?id=60"
-            },
-            {
-                url: "https://cdnlivetv.tv/secure/api/v1/6a288d2a81d8192bb76cc315/playlist.m3u8?token=NmEyODhkMmE4MWQ4MTkyYmI3NmNjMzE1OjE3ODkzOTA4MjY4Mzg6Y2RubGl2ZXR2LnR2OjlhYTBjY2FmNjBhYzQyNGEuZjQwYjE3NGQ2YTRkYTYzMDU3ZTNlYTQ2YWE5YjViYzhiOGZmNTc5ZGU3MmQyZWE1MGJmM2YzNmE5Yzk2OGY3Yg",
-                ref: "https://cdnlivetv.tv/api/v1/channels/player/?name=Sky+Sports+F1&code=gb&user=cdnlivetv&plan=free"
-            }
-        ];
+        if (Hls.isSupported()) {
+            const hls = new Hls({
+                enableWorker: true,
+                lowLatencyMode: true,
+                backBufferLength: 30
+            });
 
-        function loadStream(index) {
-            const stream = streams[index];
-            const source = `/?url=${encodeURIComponent(stream.url)}&ref=${encodeURIComponent(stream.ref)}`;
-
-            if (hlsInstance) {
-                hlsInstance.destroy();
-            }
-
-            if (Hls.isSupported()) {
-                hlsInstance = new Hls({
-                    enableWorker: true,
-                    lowLatencyMode: true,
-                    backBufferLength: 30
+            hls.loadSource(source);
+            hls.attachMedia(video);
+            
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                const player = new Plyr(video, {
+                    autoplay: true,
+                    controls: ['play-large', 'play', 'mute', 'volume', 'settings', 'fullscreen']
                 });
-
-                hlsInstance.loadSource(source);
-                hlsInstance.attachMedia(video);
-                
-                hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-                    if (!plyrInstance) {
-                        plyrInstance = new Plyr(video, {
-                            autoplay: true,
-                            controls: ['play-large', 'play', 'mute', 'volume', 'settings', 'fullscreen']
-                        });
-                    }
-                    video.play();
-                });
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = source;
-                video.addEventListener('loadedmetadata', () => {
-                    if (!plyrInstance) {
-                        plyrInstance = new Plyr(video, { autoplay: true });
-                    }
-                    video.play();
-                });
-            }
+                player.play();
+            });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = source;
+            video.addEventListener('loadedmetadata', () => {
+                const player = new Plyr(video, { autoplay: true });
+                player.play();
+            });
         }
-
-        // Initialize the first stream automatically
-        document.addEventListener('DOMContentLoaded', () => loadStream(0));
     </script>
 </body>
 </html>
