@@ -28,11 +28,18 @@ export default {
       });
 
       const contentType = response.headers.get("content-type") || "";
-      const isManifest = targetUrl.includes(".m3u8") || contentType.includes("mpegurl") || contentType.includes("apple.mpegurl");
+      
+      // Fix: .m3u8 ya ap-south-1 / mumbai ke kisi bhi playlist variant ko pakadne ke liye
+      const isManifest = targetUrl.includes(".m3u8") || contentType.includes("mpegurl") || contentType.includes("text/plain");
 
       if (isManifest) {
         const manifestText = await response.text();
         
+        // Agar galti se error text ya HTML aaya ho toh check karein
+        if (manifestText.includes("<html") || manifestText.includes("AccessDenied")) {
+          return new Response(manifestText, { status: 502, headers: { "Access-Control-Allow-Origin": "*" } });
+        }
+
         const rewrittenManifest = manifestText
           .split("\n")
           .map((line) => {
@@ -62,8 +69,8 @@ export default {
       const mediaResponse = new Response(response.body, response);
       mediaResponse.headers.set("Access-Control-Allow-Origin", "*");
       return mediaResponse;
-    }(_err) {
-      return new Response("Stream Error", { status: 500 });
+    } catch (err) {
+      return new Response(err.message, { status: 500, headers: { "Access-Control-Allow-Origin": "*" } });
     }
   },
 };
