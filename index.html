@@ -4,52 +4,67 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Player</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/controls.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <style>
-        * { box-sizing: border-box; }
         body { margin: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; }
         .player-wrapper { width: 100%; max-width: 800px; }
-        .shaka-video-container { width: 100%; height: auto; }
     </style>
 </head>
 <body>
-    <div class="player-wrapper" data-shaka-player-container>
-        <video autoplay data-shaka-player id="player" crossorigin playsinline muted style="width:100%;height:100%"></video>
+    <div class="player-wrapper">
+        <video id="player" controls crossorigin playsinline muted></video>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/shaka-player.ui.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15"></script>
+    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <script>
+        const video = document.getElementById('player');
         const streamUrl = "https://dai-fancode.pages.dev/mumbai/4248679_english_hls_55e888c33f12582_1ta-di_h264/index.m3u8";
-        const source = `/?url=${encodeURIComponent(streamUrl)}`;
 
-        async function initApp() {
-            shaka.polyfill.installAll();
-            if (!shaka.Player.isBrowserSupported()) {
-                console.error('Browser not supported');
-                return;
-            }
-
-            const video = document.getElementById('player');
-            const container = video.uiContainer;
-            const ui = new shaka.ui.Overlay(video, container, source);
-            const player = ui.getControls().getPlayer();
-
-            window.player = player;
-            window.ui = ui;
-
-            player.addEventListener('error', (event) => {
-                console.error('Error code', event.detail.code, 'object', event.detail);
+        if (Hls.isSupported()) {
+            const hls = new Hls({
+                enableWorker: true,
+                lowLatencyMode: true,
+                backBufferLength: 30
             });
 
-            try {
-                await player.load(source);
-                console.log('The video has now been loaded!');
-            } catch (e) {
-                console.error('Error code', e.code, 'object', e);
-            }
-        }
+            hls.loadSource(streamUrl);
+            hls.attachMedia(video);
 
-        document.addEventListener('DOMContentLoaded', initApp);
+            hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+                const availableQualities = hls.levels.map((level, index) => index);
+                
+                const defaultOptions = {
+                    autoplay: true,
+                    controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
+                    settings: ['quality', 'speed'],
+                    quality: {
+                        default: hls.currentLevel,
+                        options: availableQualities,
+                        forced: true,
+                        onChange: (newQuality) => {
+                            hls.currentLevel = newQuality;
+                        }
+                    }
+                };
+
+                hls.on(Hls.Events.LEVEL_SWITCHED, (event, data) => {
+                    const player = window.player;
+                    if (player && player.config.quality) {
+                        player.config.quality.selected = data.level;
+                    }
+                });
+
+                window.player = new Plyr(video, defaultOptions);
+                window.player.play();
+            });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = streamUrl;
+            video.addEventListener('loadedmetadata', () => {
+                const player = new Plyr(video, { autoplay: true });
+                player.play();
+            });
+        }
     </script>
 </body>
 </html>
