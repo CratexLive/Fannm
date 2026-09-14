@@ -3,16 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CricXCrate Live - Premium FanCode Feed</title>
+    <title>Live Player - Channel Switcher</title>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <style>
-        body { margin: 0; padding: 0; background-color: #050a0f; overflow-x: hidden; }
+        body { margin: 0; background-color: #121212; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; box-sizing: border-box; }
+        .controls { margin-bottom: 20px; width: 100%; max-width: 800px; display: flex; gap: 10px; }
+        select { flex-grow: 1; padding: 10px; background: #222; color: #fff; border: 1px solid #444; border-radius: 5px; font-size: 16px; outline: none; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #0056b3; }
+        .player-wrapper { width: 100%; max-width: 800px; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
+    <div class="controls">
+        <select id="channel-selector">
+            <option value="" data-referer="">Select a channel...</option>
+            <!-- Channels mapped with their respective Referers -->
+            <option value="https://xameleon.phantemlis.top/one/secure/459cb927badb4c7d5879b43b39820f0f/1789369667/premium37/index.m3u8" data-referer="https://hamis.romponalis.st/premiumtv/daddy3.php?id=37">Sky Sports Action</option>
+            
+            <option value="https://xameleon.phantemlis.top/four/secure/0d2ca8af02511f635da4cfd9aa837a54/1789369660/premium65/index.m3u8" data-referer="https://hamis.romponalis.st/premiumtv/daddy3.php?id=65">Sky Sports Cricket</option>
+            
+            <option value="https://xameleon.phantemlis.top/two/secure/39a482d55bc9607e312b8a1440f0975c/1789369656/premium60/index.m3u8" data-referer="https://hamis.romponalis.st/premiumtv/daddy3.php?id=60">Sky Sports F1</option>
+            
+            <option value="https://xameleon.phantemlis.top/four/secure/4f5acdb152937a695c5a7abe0a66380f/1789369674/premium671/index.m3u8" data-referer="https://hamis.romponalis.st/premiumtv/daddy3.php?id=671">Sky Sports Premier League</option>
+        </select>
+        <button onclick="loadSelectedChannel()">Play</button>
+    </div>
 
-    <!-- Custom Web Component with Fancode stream routed through worker proxy format or direct raw link -->
-    <cricxcrate-ui stream-url="https://dai-fancode.pages.dev/mumbai/4248312_english_hls_72d930b34b31875_1ta-di_h264/index.m3u8"></cricxcrate-ui>
+    <div class="player-wrapper">
+        <video id="player" controls crossorigin playsinline muted></video>
+    </div>
 
-    <script src="component.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15"></script>
+    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+    <script>
+        const video = document.getElementById('player');
+        const selector = document.getElementById('channel-selector');
+        let hls; // Keep track of the hls instance to destroy it when switching
+        
+        const player = new Plyr(video, {
+            controls: ['play-large', 'play', 'mute', 'volume', 'settings', 'fullscreen']
+        });
+
+        function loadSelectedChannel() {
+            const selectedOption = selector.options[selector.selectedIndex];
+            const streamUrl = selectedOption.value;
+            const referer = selectedOption.getAttribute('data-referer');
+
+            if (!streamUrl) {
+                alert("Please select a channel first.");
+                return;
+            }
+
+            // Construct proxy URL with both target URL and the specific Referer
+            let source = `/?url=${encodeURIComponent(streamUrl)}`;
+            if (referer) {
+                source += `&referer=${encodeURIComponent(referer)}`;
+            }
+
+            // Clean up previous stream instance
+            if (hls) {
+                hls.destroy();
+            }
+
+            if (Hls.isSupported()) {
+                hls = new Hls({
+                    enableWorker: true,
+                    lowLatencyMode: true,
+                    backBufferLength: 30
+                });
+
+                hls.loadSource(source);
+                hls.attachMedia(video);
+                
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    player.play();
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = source;
+                video.addEventListener('loadedmetadata', () => {
+                    player.play();
+                });
+            }
+        }
+    </script>
 </body>
 </html>
