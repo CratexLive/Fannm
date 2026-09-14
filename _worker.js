@@ -1,5 +1,5 @@
 export default {
-  async fetch(request, env, ctx) {
+  async fetch(request, env) {
     const url = new URL(request.url);
     const targetUrl = url.searchParams.get("url");
 
@@ -11,93 +11,57 @@ export default {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS, POST",
+          "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
           "Access-Control-Allow-Headers": "*",
         },
       });
     }
 
     const forwardHeaders = new Headers();
-    forwardHeaders.set("User-Agent", "ReactNativeVideo/9.11.1 (Linux;Android 13) AndroidXMedia3/1.6.1");
-    forwardHeaders.set("Referer", "https://fancode.com/");
-    forwardHeaders.set("Origin", "https://fancode.com/");
+    forwardHeaders.set("User-Agent", "ReactNativeVideo/9.11.1");
 
     try {
-      const response = await fetch(targetUrl, {
-        method: request.method,
-        headers: forwardHeaders,
-      });
+      const response = await fetch(targetUrl, { method: request.method, headers: forwardHeaders });
+
+      if (!response.ok && response.status !== 200) {
+        return new Response(await response.text(), {
+          status: response.status,
+          headers: { "Access-Control-Allow-Origin": "*" }
+        });
+      }
 
       const contentType = response.headers.get("content-type") || "";
-      let textContent = "";
-      
-      try {
-        textContent = await response.clone().text();
-      } catch (e) {}
-
-      // Check if it's an HLS manifest (.m3u8 or contains #EXTM3U)
-      const isManifest = textContent.trim().startsWith("#EXTM3U") || 
-                         targetUrl.includes(".m3u8") || 
-                         contentType.includes("mpegurl");
+      const isManifest = contentType.includes("mpegurl") || targetUrl.includes(".m3u8");
 
       if (isManifest) {
-        const targetParsed = new URL(targetUrl);
-        const originalSearch = targetParsed.search;
-
-        const rewrittenManifest = textContent
+        const rewrittenManifest = (await response.text())
           .split("\n")
-          .map((line) => {
-            let trimmed = line.trim();
-            
+          .map(line => {
+            const trimmed = line.trim();
             if (trimmed && !trimmed.startsWith("#")) {
               try {
-                let absoluteUrl = new URL(trimmed, targetUrl);
-                if (originalSearch && !absoluteUrl.search) {
-                  absoluteUrl.search = originalSearch;
-                }
-                return `${url.origin}/?url=${encodeURIComponent(absoluteUrl.href)}`;
-              } catch (e) {
-                return line;
-              }
+                const absoluteUrl = new URL(trimmed, targetUrl).href;
+                return `${url.origin}/?url=${encodeURIComponent(absoluteUrl)}`;
+              } catch { return line; }
             }
-
-            if (trimmed.startsWith("#EXT-X-KEY")) {
-              return line.replace(/URI="([^"]+)"/g, (match, keyUrl) => {
-                try {
-                  const absoluteKeyUrl = new URL(keyUrl, targetUrl).href;
-                  return `URI="${url.origin}/?url=${encodeURIComponent(absoluteKeyUrl)}"`;
-                } catch (e) {
-                  return match;
-                }
-              });
-            }
-
             return line;
-          })
-          .join("\n");
+          }).join("\n");
 
         return new Response(rewrittenManifest, {
-          status: response.status,
+          status: 200,
           headers: {
             "Content-Type": "application/vnd.apple.mpegurl",
             "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
             "Cache-Control": "no-store",
           },
         });
       }
 
-      // For TS chunks and media segments, pipe the response directly with open CORS headers
-      const newResponse = new Response(response.body, response);
-      newResponse.headers.set("Access-Control-Allow-Origin", "*");
-      newResponse.headers.set("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
-      return newResponse;
-
+      const mediaResponse = new Response(response.body, response);
+      mediaResponse.headers.set("Access-Control-Allow-Origin", "*");
+      return mediaResponse;
     } catch (err) {
-      return new Response(err.message, { 
-        status: 500, 
-        headers: { "Access-Control-Allow-Origin": "*" } 
-      });
+      return new Response(err.message, { status: 502, headers: { "Access-Control-Allow-Origin": "*" } });
     }
   },
 };
