@@ -42,6 +42,10 @@ export default {
           return new Response(textContent, { status: 502, headers: { "Access-Control-Allow-Origin": "*" } });
         }
 
+        // Extract original query parameters from targetUrl to preserve session tokens across sub-paths
+        const targetParsed = new URL(targetUrl);
+        const originalSearch = targetParsed.search;
+
         const rewrittenManifest = textContent
           .split("\n")
           .map((line) => {
@@ -49,8 +53,12 @@ export default {
             
             if (trimmed && !trimmed.startsWith("#")) {
               try {
-                const absoluteUrl = new URL(trimmed, targetUrl).href;
-                return `${url.origin}/?url=${encodeURIComponent(absoluteUrl)}`;
+                let absoluteUrl = new URL(trimmed, targetUrl);
+                // Preserve or carry over essential tokens if missing in sub-path
+                if (originalSearch && !absoluteUrl.search) {
+                  absoluteUrl.search = originalSearch;
+                }
+                return `${url.origin}/?url=${encodeURIComponent(absoluteUrl.href)}`;
               } catch (e) {
                 return line;
               }
