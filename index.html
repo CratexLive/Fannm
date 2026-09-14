@@ -12,19 +12,17 @@
         button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
         button:hover { background: #0056b3; }
         .player-wrapper { width: 100%; max-width: 800px; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        #error-log { display: none; width: 100%; max-width: 780px; margin-top: 15px; padding: 15px; background-color: #330000; border: 1px solid #ff4444; color: #ff8888; border-radius: 5px; font-family: monospace; word-break: break-all; }
     </style>
 </head>
 <body>
     <div class="controls">
         <select id="channel-selector">
             <option value="" data-referer="">Select a channel...</option>
-            <!-- Channels mapped with their respective Referers -->
+            <option value="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" data-referer="">Test Stream (No Security)</option>
             <option value="https://xameleon.phantemlis.top/one/secure/459cb927badb4c7d5879b43b39820f0f/1789369667/premium37/index.m3u8" data-referer="https://hamis.romponalis.st/premiumtv/daddy3.php?id=37">Sky Sports Action</option>
-            
             <option value="https://xameleon.phantemlis.top/four/secure/0d2ca8af02511f635da4cfd9aa837a54/1789369660/premium65/index.m3u8" data-referer="https://hamis.romponalis.st/premiumtv/daddy3.php?id=65">Sky Sports Cricket</option>
-            
             <option value="https://xameleon.phantemlis.top/two/secure/39a482d55bc9607e312b8a1440f0975c/1789369656/premium60/index.m3u8" data-referer="https://hamis.romponalis.st/premiumtv/daddy3.php?id=60">Sky Sports F1</option>
-            
             <option value="https://xameleon.phantemlis.top/four/secure/4f5acdb152937a695c5a7abe0a66380f/1789369674/premium671/index.m3u8" data-referer="https://hamis.romponalis.st/premiumtv/daddy3.php?id=671">Sky Sports Premier League</option>
         </select>
         <button onclick="loadSelectedChannel()">Play</button>
@@ -33,13 +31,17 @@
     <div class="player-wrapper">
         <video id="player" controls crossorigin playsinline muted></video>
     </div>
+    
+    <!-- This box will show exactly why a stream fails -->
+    <div id="error-log"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15"></script>
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <script>
         const video = document.getElementById('player');
         const selector = document.getElementById('channel-selector');
-        let hls; // Keep track of the hls instance to destroy it when switching
+        const errorLog = document.getElementById('error-log');
+        let hls; 
         
         const player = new Plyr(video, {
             controls: ['play-large', 'play', 'mute', 'volume', 'settings', 'fullscreen']
@@ -55,13 +57,15 @@
                 return;
             }
 
-            // Construct proxy URL with both target URL and the specific Referer
+            // Hide error log on new load
+            errorLog.style.display = 'none';
+            errorLog.innerHTML = '';
+
             let source = `/?url=${encodeURIComponent(streamUrl)}`;
             if (referer) {
                 source += `&referer=${encodeURIComponent(referer)}`;
             }
 
-            // Clean up previous stream instance
             if (hls) {
                 hls.destroy();
             }
@@ -71,6 +75,37 @@
                     enableWorker: true,
                     lowLatencyMode: true,
                     backBufferLength: 30
+                });
+
+                // Error Handling Logic
+                hls.on(Hls.Events.ERROR, function (event, data) {
+                    if (data.fatal) {
+                        errorLog.style.display = 'block';
+                        let errorDetails = `<strong>Fatal Error:</strong> ${data.type} <br><strong>Details:</strong> ${data.details}`;
+                        
+                        if (data.response && data.response.code) {
+                            errorDetails += `<br><br><strong>HTTP Status:</strong> ${data.response.code}`;
+                            if (data.response.code === 403) {
+                                errorDetails += `<br><em>(Error 403: The server blocked your proxy's IP address or the token is expired.)</em>`;
+                            } else if (data.response.code === 404) {
+                                errorDetails += `<br><em>(Error 404: The stream link is dead or no longer exists.)</em>`;
+                            }
+                        }
+                        
+                        errorLog.innerHTML = errorDetails;
+
+                        switch (data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                hls.destroy();
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                hls.recoverMediaError();
+                                break;
+                            default:
+                                hls.destroy();
+                                break;
+                        }
+                    }
                 });
 
                 hls.loadSource(source);
