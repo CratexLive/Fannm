@@ -58,7 +58,7 @@ class CricXCrateUI extends HTMLElement {
 
       if (e.data === 'cricxcrate-playing') {
         if (!this.isStreamUnlocked && !this.lockTimer) {
-          this.lockTimer = setTimeout(() => this.triggerLock(), this.PREVIEW_TIME);
+          this.lockTimer = setTimeout(() => this.triggerLock(true), this.PREVIEW_TIME);
         }
       }
     };
@@ -86,7 +86,7 @@ class CricXCrateUI extends HTMLElement {
 
     setTimeout(() => {
       const modal = this._shadow.getElementById('tgInitialModal');
-      if (modal && !this.isStreamUnlocked) modal.classList.add('show');
+      if (modal) modal.classList.add('show');
     }, 2000);
   }
 
@@ -173,6 +173,43 @@ class CricXCrateUI extends HTMLElement {
     }
   }
 
+  checkUnlockStatus() {
+    const savedTime = localStorage.getItem('cricxcrate_unlocked_time');
+    if (savedTime) {
+      if (Date.now() - parseInt(savedTime, 10) < 24 * 60 * 60 * 1000) {
+        this.isStreamUnlocked = true;
+      } else {
+        localStorage.removeItem('cricxcrate_unlocked_time');
+        this.isStreamUnlocked = false;
+      }
+    } else {
+      this.isStreamUnlocked = false;
+    }
+  }
+
+  triggerLock(isFromPreview = false) {
+    if (isFromPreview && this.isStreamUnlocked) return;
+
+    const iframe = this._shadow.getElementById('player');
+    if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage('cricxcrate-force-pause', '*');
+    try {
+      if (document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+      else if (document.webkitFullscreenElement) document.webkitExitFullscreen();
+    } catch(err){}
+    
+    const modal = this._shadow.getElementById('tgInitialModal');
+    if (modal) modal.classList.add('show');
+  }
+
+  unlockStream() {
+    localStorage.setItem('cricxcrate_unlocked_time', Date.now().toString());
+    this.isStreamUnlocked = true;
+
+    this._shadow.getElementById('tgInitialModal').classList.remove('show');
+    const iframe = this._shadow.getElementById('player');
+    if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage('cricxcrate-force-play', '*');
+  }
+
   switchChannel(index) {
     if (this.channels[index]) {
       this.currentChannelIndex = index;
@@ -202,10 +239,7 @@ class CricXCrateUI extends HTMLElement {
       this.setupIframePlayer();
       this.closeDropdown();
 
-      if (!this.isStreamUnlocked) {
-        const modal = this._shadow.getElementById('tgInitialModal');
-        if (modal) modal.classList.add('show');
-      }
+      this.triggerLock(false);
     }
   }
 
@@ -273,25 +307,23 @@ class CricXCrateUI extends HTMLElement {
         #warpGridCanvas { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 0; opacity: 0.8; }
         .container { width: min(1500px, 92vw); margin: 0 auto; padding: 0 0 clamp(40px, 6vw, 100px); position: relative; z-index: 10; }
         
-        .nav { height: clamp(64px, 8.5vh, 96px); display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 50; gap: 10px; }
-        .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
-        .brand-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(16px, 1.8vw, 22px); font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: var(--heading-dynamic); }
+        .nav { height: clamp(60px, 7.5vh, 84px); display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 50; gap: 8px; }
+        .brand { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; flex-shrink: 0; }
+        .brand-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(15px, 1.6vw, 20px); font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: var(--heading-dynamic); }
 
-        .nav-right-cluster { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
+        .nav-right-cluster { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
         
-        /* Compact Theme Switcher */
         .theme-switch-deck { background: var(--bg-card); border: 1px solid var(--border-glass-bright); border-radius: 100px; backdrop-filter: blur(20px); padding: 2px; display: flex; align-items: center; gap: 2px; }
-        .mode-toggle-btn { height: 26px; padding: 0 8px; display: inline-flex; align-items: center; gap: 4px; border: 0; background: transparent; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 7px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; border-radius: 100px; cursor: pointer; transition: all 0.25s ease; white-space: nowrap; }
+        .mode-toggle-btn { height: 24px; padding: 0 6px; display: inline-flex; align-items: center; gap: 3px; border: 0; background: transparent; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 6px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; border-radius: 100px; cursor: pointer; transition: all 0.25s ease; white-space: nowrap; }
         .mode-toggle-btn i { width: 3px; height: 3px; border-radius: 50%; background: currentColor; }
         .mode-toggle-btn.active { background: var(--accent); color: #000; }
         .mode-toggle-btn.active i { background: #000; }
 
-        .nav-actions { display: flex; align-items: center; gap: 8px; }
-        .live-pill-badge { height: 30px; padding: 0 10px; display: flex; align-items: center; gap: 5px; background: var(--bg-card); border: 1px solid var(--border-glass); backdrop-filter: blur(12px); border-radius: 100px; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
-        .pulsing-live-dot { width: 5px; height: 5px; background: #ff2a2a; border-radius: 50%; box-shadow: 0 0 8px #ff2a2a; animation: liveSignal 1.5s ease-in-out infinite; }
+        .live-pill-badge { height: 28px; padding: 0 8px; display: flex; align-items: center; gap: 4px; background: var(--bg-card); border: 1px solid var(--border-glass); backdrop-filter: blur(12px); border-radius: 100px; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 7px; letter-spacing: 0.8px; text-transform: uppercase; white-space: nowrap; }
+        .pulsing-live-dot { width: 4px; height: 4px; background: #ff2a2a; border-radius: 50%; box-shadow: 0 0 6px #ff2a2a; animation: liveSignal 1.5s ease-in-out infinite; }
         @keyframes liveSignal { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.8); } }
         
-        .nav-join-btn { height: 30px; padding: 0 14px; display: inline-flex; align-items: center; justify-content: center; border-radius: 100px; background: var(--btn-main-bg); color: var(--btn-main-text); text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 800; letter-spacing: 1px; transition: all 0.25s ease; white-space: nowrap; }
+        .nav-join-btn { height: 28px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; border-radius: 100px; background: var(--btn-main-bg); color: var(--btn-main-text); text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: 9px; font-weight: 800; letter-spacing: 1px; transition: all 0.25s ease; white-space: nowrap; }
         .nav-join-btn:hover { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent-glow); transform: translateY(-1px); }
 
         .hero { position: relative; padding: clamp(20px, 3vw, 40px) 0 clamp(10px, 2vw, 24px); display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
@@ -364,9 +396,6 @@ class CricXCrateUI extends HTMLElement {
           .player-meta-bar { flex-direction: column; align-items: flex-start; }
           .share-action-btn { width: 100%; justify-content: center; }
           .custom-dropdown-menu { width: 280px; right: auto; left: 0; }
-          .brand-title { font-size: 14px; }
-          .mode-toggle-btn { font-size: 6px; padding: 0 6px; height: 24px; }
-          .nav-join-btn { font-size: 9px; height: 28px; padding: 0 10px; }
           .live-pill-badge { display: none; }
         }
       </style>
@@ -453,36 +482,6 @@ class CricXCrateUI extends HTMLElement {
       </div>
     `;
   }
-  checkUnlockStatus() {
-    const savedTime = localStorage.getItem('cricxcrate_unlocked_time');
-    if (savedTime) {
-      if (Date.now() - parseInt(savedTime, 10) < 24 * 60 * 60 * 1000) {
-        this.isStreamUnlocked = true;
-      } else {
-        localStorage.removeItem('cricxcrate_unlocked_time');
-      }
-    }
-  }
-
-  triggerLock() {
-    if (this.isStreamUnlocked) return;
-    const iframe = this._shadow.getElementById('player');
-    if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage('cricxcrate-force-pause', '*');
-    try {
-      if (document.fullscreenElement) document.exitFullscreen().catch(()=>{});
-      else if (document.webkitFullscreenElement) document.webkitExitFullscreen();
-    } catch(err){}
-    this._shadow.getElementById('tgInitialModal').classList.add('show');
-  }
-
-  unlockStream() {
-    localStorage.setItem('cricxcrate_unlocked_time', Date.now().toString());
-    this.isStreamUnlocked = true;
-    this._shadow.getElementById('tgInitialModal').classList.remove('show');
-    const iframe = this._shadow.getElementById('player');
-    if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage('cricxcrate-force-play', '*');
-  }
-
   initEventListeners() {
     const btnShare = this._shadow.getElementById("btnShare");
     const shareBtnText = this._shadow.getElementById("shareBtnText");
