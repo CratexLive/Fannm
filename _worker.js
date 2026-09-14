@@ -28,24 +28,18 @@ export default {
       });
 
       const contentType = response.headers.get("content-type") || "";
-      
-      // Fix: .m3u8 ya ap-south-1 / mumbai ke kisi bhi playlist variant ko pakadne ke liye
       const isManifest = targetUrl.includes(".m3u8") || contentType.includes("mpegurl") || contentType.includes("text/plain");
 
       if (isManifest) {
-        const manifestText = await response.text();
+        let manifestText = await response.text();
         
-        // Agar galti se error text ya HTML aaya ho toh check karein
-        if (manifestText.includes("<html") || manifestText.includes("AccessDenied")) {
-          return new Response(manifestText, { status: 502, headers: { "Access-Control-Allow-Origin": "*" } });
-        }
-
         const rewrittenManifest = manifestText
           .split("\n")
           .map((line) => {
             const trimmed = line.trim();
             if (trimmed && !trimmed.startsWith("#")) {
               try {
+                // Resolves relative URLs for both chunks (.ts/.mp4) and sub-manifests (.m3u8)
                 const absoluteUrl = new URL(trimmed, targetUrl).href;
                 return `${url.origin}/?url=${encodeURIComponent(absoluteUrl)}`;
               } catch (e) {
