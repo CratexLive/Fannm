@@ -133,7 +133,7 @@ class CricXCrateUI extends HTMLElement {
     } catch (err) {
       this.channels = [{
         title: "Default Live Stream",
-        url: `/?url=${encodeURIComponent("https://dai-fancode.pages.dev/mumbai/4248679_english_hls_55e888c33f12582_1ta-di_h264/index.m3u8")}`
+        url: `/?url=${encodeURIComponent("https://dai-fancode.pages.dev/out/v1/ap-south-1/4249241_english_622056/ad-h264/index.m3u8")}`
       }];
       this.CONFIG.streamManifest = this.channels[0].url;
       this.CONFIG.streamTitle = this.channels[0].title;
@@ -419,7 +419,6 @@ class CricXCrateUI extends HTMLElement {
       } catch (err) {}
     });
   }
-
   setupIframePlayer() {
     const iframe = this._shadow.getElementById('player');
     const streamUrl = this.CONFIG.streamManifest;
@@ -463,7 +462,6 @@ class CricXCrateUI extends HTMLElement {
             let playerInstance = null;
             
             function initPlyrAndOrientation() {
-              if (playerInstance) return;
               playerInstance = new Plyr(video, { 
                 autoplay: true,
                 controls: ['play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
@@ -488,17 +486,9 @@ class CricXCrateUI extends HTMLElement {
 
             if (Hls.isSupported()) {
               const hls = new Hls({ 
-                startLevel: -1, 
-                capLevelToPlayerSize: true, 
-                autoLevelCapping: -1,
-                maxBufferLength: 30, 
-                maxMaxBufferLength: 60, 
-                maxBufferSize: 60 * 1000 * 1000, 
-                liveSyncDurationCount: 3, 
-                liveMaxLatencyDurationCount: 10,
-                enableWorker: true,
-                lowLatencyMode: false, 
-                capLevelOnFPSDrop: true,
+                enableWorker: true, 
+                lowLatencyMode: true,
+                maxMaxBufferLength: 30,
                 xhrSetup: function (xhr, url) {
                   xhr.withCredentials = false;
                 }
@@ -555,7 +545,6 @@ class CricXCrateUI extends HTMLElement {
       </html>
     `;
   }
-
   initWarpField() {
     const canvas = this._shadow.getElementById('warpGridCanvas');
     const ctx = canvas.getContext('2d');
