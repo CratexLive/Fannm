@@ -27,22 +27,28 @@ export default {
         headers: forwardHeaders,
       });
 
-      const contentType = response.headers.get("content-type") || "";
-      const isTextManifest = targetUrl.includes(".m3u8") || contentType.includes("mpegurl") || contentType.includes("text/plain");
+      // Clone response to inspect content for manifest sniffing
+      const clonedResponse = response.clone();
+      let textContent = "";
+      try {
+        textContent = await clonedResponse.text();
+      } catch (e) {}
 
-      if (isTextManifest) {
-        let manifestText = await response.text();
-        
-        if (manifestText.includes("<html") || manifestText.includes("AccessDenied")) {
-          return new Response(manifestText, { status: 502, headers: { "Access-Control-Allow-Origin": "*" } });
+      // Content Sniffing: Check if it's an HLS playlist regardless of extension/content-type
+      const isManifest = textContent.trim().startsWith("#EXTM3U") || 
+                         targetUrl.includes(".m3u8") || 
+                         response.headers.get("content-type")?.includes("mpegurl");
+
+      if (isManifest) {
+        if (textContent.includes("<html") || textContent.includes("AccessDenied")) {
+          return new Response(textContent, { status: 502, headers: { "Access-Control-Allow-Origin": "*" } });
         }
 
-        const rewrittenManifest = manifestText
+        const rewrittenManifest = textContent
           .split("\n")
           .map((line) => {
             let trimmed = line.trim();
             
-            // 1. Handle normal chunk/sub-playlist lines
             if (trimmed && !trimmed.startsWith("#")) {
               try {
                 const absoluteUrl = new URL(trimmed, targetUrl).href;
@@ -52,7 +58,6 @@ export default {
               }
             }
 
-            // 2. Handle Encryption Keys (#EXT-X-KEY) inside manifests
             if (trimmed.startsWith("#EXT-X-KEY")) {
               return line.replace(/URI="(https?:\/\/[^"]+)"/g, (match, keyUrl) => {
                 try {
