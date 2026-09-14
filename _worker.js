@@ -27,14 +27,12 @@ export default {
         headers: forwardHeaders,
       });
 
-      // Clone response to inspect content for manifest sniffing
       const clonedResponse = response.clone();
       let textContent = "";
       try {
         textContent = await clonedResponse.text();
       } catch (e) {}
 
-      // Content Sniffing: Check if it's an HLS playlist regardless of extension/content-type
       const isManifest = textContent.trim().startsWith("#EXTM3U") || 
                          targetUrl.includes(".m3u8") || 
                          response.headers.get("content-type")?.includes("mpegurl");
