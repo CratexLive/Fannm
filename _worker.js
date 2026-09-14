@@ -2,10 +2,9 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const targetUrl = url.searchParams.get("url");
-    const referer = url.searchParams.get("referer"); // Dynamically grab referer
+    const referer = url.searchParams.get("referer");
 
     if (!targetUrl) {
-      // Serve index.html if no URL parameter is provided
       return env.ASSETS ? env.ASSETS.fetch(request) : new Response("Not Found", { status: 404 });
     }
 
@@ -20,10 +19,8 @@ export default {
     }
 
     const forwardHeaders = new Headers();
-    // Standard User-Agent to prevent basic blocks
     forwardHeaders.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36");
     
-    // Inject the specific Referer if the frontend provided it
     if (referer) {
       forwardHeaders.set("Referer", referer);
     }
@@ -33,6 +30,14 @@ export default {
         method: request.method,
         headers: forwardHeaders,
       });
+
+      // Pass HTTP errors (like 403 or 404) directly back to the frontend so Hls.js can display them
+      if (!response.ok && !response.headers.get("content-type")?.includes("mpegurl")) {
+          return new Response(`Target server rejected the request with ${response.status}`, {
+              status: response.status,
+              headers: { "Access-Control-Allow-Origin": "*" }
+          });
+      }
 
       const contentType = response.headers.get("content-type") || "";
       const isManifest = contentType.includes("mpegurl") || targetUrl.includes(".m3u8");
@@ -49,14 +54,12 @@ export default {
               try {
                 const absoluteUrlObj = new URL(trimmed, targetUrl);
                 
-                // Carry over original chunk tokens (for token preservation)
                 baseUrlObj.searchParams.forEach((value, key) => {
                   if (!absoluteUrlObj.searchParams.has(key)) {
                     absoluteUrlObj.searchParams.set(key, value);
                   }
                 });
 
-                // Build the proxy URL for the chunks, carrying over the referer too
                 let proxyChunkUrl = `${url.origin}/?url=${encodeURIComponent(absoluteUrlObj.href)}`;
                 if (referer) {
                   proxyChunkUrl += `&referer=${encodeURIComponent(referer)}`;
@@ -85,7 +88,10 @@ export default {
       mediaResponse.headers.set("Access-Control-Allow-Origin", "*");
       return mediaResponse;
     } catch (err) {
-      return new Response(err.message, { status: 500 });
+      return new Response(err.message, { 
+        status: 500,
+        headers: { "Access-Control-Allow-Origin": "*" }
+      });
     }
   },
 };
