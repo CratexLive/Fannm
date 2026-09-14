@@ -1,10 +1,9 @@
+// _worker.js
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const targetUrl = url.searchParams.get("url");
-    const referer = url.searchParams.get("ref");
 
-    // If no URL parameter, serve the static HTML from Cloudflare Pages
     if (!targetUrl) {
       return env.ASSETS.fetch(request);
     }
@@ -20,13 +19,8 @@ export default {
     }
 
     const forwardHeaders = new Headers();
-    forwardHeaders.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
-    
-    // Dynamically inject the referer for the specific stream
-    if (referer) {
-      forwardHeaders.set("Referer", referer);
-      forwardHeaders.set("Origin", new URL(referer).origin);
-    }
+    forwardHeaders.set("User-Agent", "ReactNativeVideo/9.11.1 (Linux;Android 13) AndroidXMedia3/1.6.1");
+    forwardHeaders.set("Referer", "https://fancode.com/");
 
     try {
       const response = await fetch(targetUrl, {
@@ -46,14 +40,8 @@ export default {
             const trimmed = line.trim();
             if (trimmed && !trimmed.startsWith("#")) {
               try {
-                // Safely resolve any relative chunk paths against the parent URL
                 const absoluteUrl = new URL(trimmed, targetUrl).href;
-                // Keep the proxy routing AND the referer for chunks
-                let proxyUrl = `${url.origin}/?url=${encodeURIComponent(absoluteUrl)}`;
-                if (referer) {
-                  proxyUrl += `&ref=${encodeURIComponent(referer)}`;
-                }
-                return proxyUrl;
+                return `${url.origin}/?url=${encodeURIComponent(absoluteUrl)}`;
               } catch (e) {
                 return line;
               }
