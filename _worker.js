@@ -28,7 +28,7 @@ export default {
       });
 
       const contentType = response.headers.get("content-type") || "";
-      const isManifest = contentType.includes("mpegurl") || targetUrl.includes(".m3u8");
+      const isManifest = targetUrl.includes(".m3u8") || contentType.includes("mpegurl") || contentType.includes("apple.mpegurl");
 
       if (isManifest) {
         const manifestText = await response.text();
@@ -62,8 +62,8 @@ export default {
       const mediaResponse = new Response(response.body, response);
       mediaResponse.headers.set("Access-Control-Allow-Origin", "*");
       return mediaResponse;
-    } catch (err) {
-      return new Response(err.message, { status: 500 });
+    }(_err) {
+      return new Response("Stream Error", { status: 500 });
     }
   },
 };
