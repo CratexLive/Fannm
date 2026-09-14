@@ -28,18 +28,21 @@ export default {
       });
 
       const contentType = response.headers.get("content-type") || "";
-      const isManifest = targetUrl.includes(".m3u8") || contentType.includes("mpegurl") || contentType.includes("text/plain");
+      const isTextManifest = targetUrl.includes(".m3u8") || contentType.includes("mpegurl") || contentType.includes("text/plain");
 
-      if (isManifest) {
-        let manifestText = await response.text();
+      if (isTextManifest) {
+        const manifestText = await response.text();
         
+        if (manifestText.includes("<html") || manifestText.includes("AccessDenied")) {
+          return new Response(manifestText, { status: 502, headers: { "Access-Control-Allow-Origin": "*" } });
+        }
+
         const rewrittenManifest = manifestText
           .split("\n")
           .map((line) => {
             const trimmed = line.trim();
             if (trimmed && !trimmed.startsWith("#")) {
               try {
-                // Resolves relative URLs for both chunks (.ts/.mp4) and sub-manifests (.m3u8)
                 const absoluteUrl = new URL(trimmed, targetUrl).href;
                 return `${url.origin}/?url=${encodeURIComponent(absoluteUrl)}`;
               } catch (e) {
@@ -63,6 +66,7 @@ export default {
       const mediaResponse = new Response(response.body, response);
       mediaResponse.headers.set("Access-Control-Allow-Origin", "*");
       return mediaResponse;
+
     } catch (err) {
       return new Response(err.message, { status: 500, headers: { "Access-Control-Allow-Origin": "*" } });
     }
