@@ -419,7 +419,6 @@ class CricXCrateUI extends HTMLElement {
       } catch (err) {}
     });
   }
-
   setupIframePlayer() {
     const iframe = this._shadow.getElementById('player');
     const streamUrl = this.CONFIG.streamManifest;
@@ -497,7 +496,10 @@ class CricXCrateUI extends HTMLElement {
                 liveMaxLatencyDurationCount: 10,
                 enableWorker: true,
                 lowLatencyMode: false, 
-                capLevelOnFPSDrop: true 
+                capLevelOnFPSDrop: true,
+                xhrSetup: function (xhr, url) {
+                  xhr.withCredentials = false;
+                }
               });
               
               hls.loadSource(source);
@@ -551,7 +553,6 @@ class CricXCrateUI extends HTMLElement {
       </html>
     `;
   }
-
   initWarpField() {
     const canvas = this._shadow.getElementById('warpGridCanvas');
     const ctx = canvas.getContext('2d');
