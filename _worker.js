@@ -2,24 +2,17 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const targetUrl = url.searchParams.get("url");
+    const referer = url.searchParams.get("referer"); // Dynamically grab referer
 
     if (!targetUrl) {
-      return env.ASSETS ? env.ASSETS.fetch(request) : new Response("Missing URL", { status: 400 });
+      // Serve index.html if no URL parameter is provided
+      return env.ASSETS ? env.ASSETS.fetch(request) : new Response("Not Found", { status: 404 });
     }
-
-    const authKey = url.searchParams.get("key");
-    const SECRET_KEY = "cricxcrate"; 
-    
-    if (authKey !== SECRET_KEY) {
-      return new Response("Unauthorized Request", { status: 403 });
-    }
-
-    const allowedOrigin = "*";
 
     if (request.method === "OPTIONS") {
       return new Response(null, {
         headers: {
-          "Access-Control-Allow-Origin": allowedOrigin,
+          "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
           "Access-Control-Allow-Headers": "*",
         },
@@ -27,8 +20,13 @@ export default {
     }
 
     const forwardHeaders = new Headers();
-    forwardHeaders.set("User-Agent", url.searchParams.get("ua") || "ReactNativeVideo/9.11.1 (Linux;Android 13) AndroidXMedia3/1.6.1");
-    forwardHeaders.set("Referer", url.searchParams.get("ref") || "https://fancode.com/");
+    // Standard User-Agent to prevent basic blocks
+    forwardHeaders.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36");
+    
+    // Inject the specific Referer if the frontend provided it
+    if (referer) {
+      forwardHeaders.set("Referer", referer);
+    }
 
     try {
       const response = await fetch(targetUrl, {
@@ -36,12 +34,12 @@ export default {
         headers: forwardHeaders,
       });
 
-      const contentType = response.headers.get("content-content") || response.headers.get("content-type") || "";
+      const contentType = response.headers.get("content-type") || "";
       const isManifest = contentType.includes("mpegurl") || targetUrl.includes(".m3u8");
-      const isTsChunk = targetUrl.includes(".ts");
 
       if (isManifest) {
         const manifestText = await response.text();
+        const baseUrlObj = new URL(targetUrl);
         
         const rewrittenManifest = manifestText
           .split("\n")
@@ -49,8 +47,22 @@ export default {
             const trimmed = line.trim();
             if (trimmed && !trimmed.startsWith("#")) {
               try {
-                const absoluteUrl = new URL(trimmed, targetUrl).href;
-                return `${url.origin}/?url=${encodeURIComponent(absoluteUrl)}&key=${authKey}`;
+                const absoluteUrlObj = new URL(trimmed, targetUrl);
+                
+                // Carry over original chunk tokens (for token preservation)
+                baseUrlObj.searchParams.forEach((value, key) => {
+                  if (!absoluteUrlObj.searchParams.has(key)) {
+                    absoluteUrlObj.searchParams.set(key, value);
+                  }
+                });
+
+                // Build the proxy URL for the chunks, carrying over the referer too
+                let proxyChunkUrl = `${url.origin}/?url=${encodeURIComponent(absoluteUrlObj.href)}`;
+                if (referer) {
+                  proxyChunkUrl += `&referer=${encodeURIComponent(referer)}`;
+                }
+                
+                return proxyChunkUrl;
               } catch (e) {
                 return line;
               }
@@ -63,19 +75,14 @@ export default {
           status: response.status,
           headers: {
             "Content-Type": "application/vnd.apple.mpegurl",
-            "Access-Control-Allow-Origin": allowedOrigin,
+            "Access-Control-Allow-Origin": "*",
             "Cache-Control": "no-store",
           },
         });
       }
 
       const mediaResponse = new Response(response.body, response);
-      mediaResponse.headers.set("Access-Control-Allow-Origin", allowedOrigin);
-      
-      if (isTsChunk) {
-        mediaResponse.headers.set("Content-Type", "video/MP2T");
-      }
-      
+      mediaResponse.headers.set("Access-Control-Allow-Origin", "*");
       return mediaResponse;
     } catch (err) {
       return new Response(err.message, { status: 500 });
