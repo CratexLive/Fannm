@@ -272,16 +272,26 @@ class CricXCrateUI extends HTMLElement {
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         #warpGridCanvas { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 0; opacity: 0.8; }
         .container { width: min(1500px, 92vw); margin: 0 auto; padding: 0 0 clamp(40px, 6vw, 100px); position: relative; z-index: 10; }
-        .nav { height: clamp(64px, 8.5vh, 96px); display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 50; padding-right: 90px; }
-        .brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; }
-        .brand-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(18px, 2vw, 24px); font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: var(--heading-dynamic); }
+        
+        .nav { height: clamp(64px, 8.5vh, 96px); display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 50; gap: 10px; }
+        .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
+        .brand-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(16px, 1.8vw, 22px); font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: var(--heading-dynamic); }
 
-        .nav-actions { display: flex; align-items: center; gap: 10px; }
-        .live-pill-badge { height: 34px; padding: 0 14px; display: flex; align-items: center; gap: 6px; background: var(--bg-card); border: 1px solid var(--border-glass); backdrop-filter: blur(12px); border-radius: 100px; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1.2px; text-transform: uppercase; }
-        .pulsing-live-dot { width: 6px; height: 6px; background: #ff2a2a; border-radius: 50%; box-shadow: 0 0 10px #ff2a2a; animation: liveSignal 1.5s ease-in-out infinite; }
+        .nav-right-cluster { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
+        
+        /* Compact Theme Switcher */
+        .theme-switch-deck { background: var(--bg-card); border: 1px solid var(--border-glass-bright); border-radius: 100px; backdrop-filter: blur(20px); padding: 2px; display: flex; align-items: center; gap: 2px; }
+        .mode-toggle-btn { height: 26px; padding: 0 8px; display: inline-flex; align-items: center; gap: 4px; border: 0; background: transparent; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 7px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; border-radius: 100px; cursor: pointer; transition: all 0.25s ease; white-space: nowrap; }
+        .mode-toggle-btn i { width: 3px; height: 3px; border-radius: 50%; background: currentColor; }
+        .mode-toggle-btn.active { background: var(--accent); color: #000; }
+        .mode-toggle-btn.active i { background: #000; }
+
+        .nav-actions { display: flex; align-items: center; gap: 8px; }
+        .live-pill-badge { height: 30px; padding: 0 10px; display: flex; align-items: center; gap: 5px; background: var(--bg-card); border: 1px solid var(--border-glass); backdrop-filter: blur(12px); border-radius: 100px; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
+        .pulsing-live-dot { width: 5px; height: 5px; background: #ff2a2a; border-radius: 50%; box-shadow: 0 0 8px #ff2a2a; animation: liveSignal 1.5s ease-in-out infinite; }
         @keyframes liveSignal { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.8); } }
         
-        .nav-join-btn { height: 34px; padding: 0 18px; display: inline-flex; align-items: center; justify-content: center; border-radius: 100px; background: var(--btn-main-bg); color: var(--btn-main-text); text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 800; letter-spacing: 1px; transition: all 0.25s ease; }
+        .nav-join-btn { height: 30px; padding: 0 14px; display: inline-flex; align-items: center; justify-content: center; border-radius: 100px; background: var(--btn-main-bg); color: var(--btn-main-text); text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 800; letter-spacing: 1px; transition: all 0.25s ease; white-space: nowrap; }
         .nav-join-btn:hover { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent-glow); transform: translateY(-1px); }
 
         .hero { position: relative; padding: clamp(20px, 3vw, 40px) 0 clamp(10px, 2vw, 24px); display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
@@ -348,19 +358,16 @@ class CricXCrateUI extends HTMLElement {
         .tg-modal-btn-joined { background: transparent; border: none; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; padding: 6px; }
         .tg-modal-btn-joined:hover { color: var(--accent); }
 
-        .theme-switch-deck { position: fixed; right: 85px; top: 16px; z-index: 900; background: var(--bg-card); border: 1px solid var(--border-glass-bright); border-radius: 100px; backdrop-filter: blur(20px); padding: 3px; display: flex; align-items: center; gap: 4px; }
-        .mode-toggle-btn { height: 30px; padding: 0 10px; display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 8px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; border-radius: 100px; cursor: pointer; transition: all 0.25s ease; }
-        .mode-toggle-btn i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
-        .mode-toggle-btn.active { background: var(--accent); color: #000; }
-        .mode-toggle-btn.active i { background: #000; }
-
         @media (max-width: 680px) {
           .community-body { grid-template-columns: 1fr; gap: 16px; }
           .comm-btn-prime { width: 100%; justify-content: center; }
           .player-meta-bar { flex-direction: column; align-items: flex-start; }
           .share-action-btn { width: 100%; justify-content: center; }
           .custom-dropdown-menu { width: 280px; right: auto; left: 0; }
-          .theme-switch-deck { right: 75px; }
+          .brand-title { font-size: 14px; }
+          .mode-toggle-btn { font-size: 6px; padding: 0 6px; height: 24px; }
+          .nav-join-btn { font-size: 9px; height: 28px; padding: 0 10px; }
+          .live-pill-badge { display: none; }
         }
       </style>
       
@@ -370,8 +377,12 @@ class CricXCrateUI extends HTMLElement {
           <a class="brand" href="${this.CONFIG.telegramLink}" target="_blank" rel="noopener">
             <div class="brand-title">CRICXCRATE</div>
           </a>
-          <div class="nav-actions">
-            <div class="live-pill-badge"><i class="pulsing-live-dot"></i>ON AIR</div>
+          <div class="nav-right-cluster">
+            <aside class="theme-switch-deck">
+              <button class="mode-toggle-btn active" id="themeDarkBtn"><i></i>Obs</button>
+              <button class="mode-toggle-btn" id="themeLightBtn"><i></i>Cer</button>
+            </aside>
+            <div class="live-pill-badge"><i class="pulsing-live-dot"></i>LIVE</div>
             <a class="nav-join-btn" href="${this.CONFIG.telegramLink}" target="_blank" rel="noopener">JOIN</a>
           </div>
         </header>
@@ -440,11 +451,6 @@ class CricXCrateUI extends HTMLElement {
           <button class="tg-modal-btn-joined" id="tgJoinedBtn">I've joined</button>
         </div>
       </div>
-
-      <aside class="theme-switch-deck">
-        <button class="mode-toggle-btn active" id="themeDarkBtn"><i></i> Obsidian</button>
-        <button class="mode-toggle-btn" id="themeLightBtn"><i></i> Ceramic</button>
-      </aside>
     `;
   }
   checkUnlockStatus() {
@@ -505,7 +511,6 @@ class CricXCrateUI extends HTMLElement {
     });
 
     btnShare.addEventListener("click", async () => {
-      // Generate clean, minimal share link using match index parameter instead of long m3u8 url
       const shareUrl = `${window.location.origin}/?match=${this.currentChannelIndex}`;
 
       const shareData = {
