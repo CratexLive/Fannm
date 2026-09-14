@@ -3,19 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CricxCrate Live - Shaka Pro</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/controls.css" crossorigin="anonymous">
+    <title>CricXCrate Live - FanCode</title>
     <style>
-        body { margin: 0; padding: 0; background-color: #0d0d0d; }
+        body { margin: 0; padding: 0; background-color: #0d0f12; }
     </style>
 </head>
 <body>
 
     <cricxcrate-ui stream-url="/?url=https%3A%2F%2Fdai-fancode.pages.dev%2Fmumbai%2F4248679_english_hls_55e888c33f12582_1ta-di_h264%2Findex.m3u8"></cricxcrate-ui>
 
-    <script src="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/shaka-player.ui.js" crossorigin="anonymous"></script>
     <script>
-class CricxCrateUI extends HTMLElement {
+class CricXCrateUI extends HTMLElement {
   static get observedAttributes() {
     return ['stream-url'];
   }
@@ -31,12 +29,12 @@ class CricxCrateUI extends HTMLElement {
 
     this.isStreamUnlocked = false;
     this.lockTimer = null;
-    this.PREVIEW_TIME = 30 * 1000; // 30 seconds preview lock
+    this.PREVIEW_TIME = 10000;
     this.animationFrameId = null;
     this.stars = [];
 
     this.msgHandler = (e) => {
-      if (e.data === 'cc-fs-enter') {
+      if (e.data === 'cricxcrate-fs-enter') {
         const rig = this._shadow.getElementById('playerContainer');
         if (rig) {
           rig.classList.add('fs-active');
@@ -46,7 +44,7 @@ class CricxCrateUI extends HTMLElement {
             if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(()=>{});
           } catch(err){}
         }
-      } else if (e.data === 'cc-fs-exit') {
+      } else if (e.data === 'cricxcrate-fs-exit') {
         const rig = this._shadow.getElementById('playerContainer');
         if (rig) {
           rig.classList.remove('fs-active');
@@ -58,7 +56,7 @@ class CricxCrateUI extends HTMLElement {
         }
       }
 
-      if (e.data === 'cc-playing') {
+      if (e.data === 'cricxcrate-playing') {
         if (!this.isStreamUnlocked && !this.lockTimer) {
           this.lockTimer = setTimeout(() => this.triggerLock(), this.PREVIEW_TIME);
         }
@@ -91,11 +89,6 @@ class CricxCrateUI extends HTMLElement {
     this.initEventListeners();
     this.setupIframePlayer();
 
-    setTimeout(() => {
-      const welcomeModal = this._shadow.getElementById('welcomeModal');
-      if (welcomeModal) welcomeModal.classList.add('show');
-    }, 500);
-
     window.addEventListener('message', this.msgHandler);
     document.addEventListener('fullscreenchange', this.nativeFsHandler);
     document.addEventListener('webkitfullscreenchange', this.nativeFsHandler);
@@ -117,41 +110,42 @@ class CricxCrateUI extends HTMLElement {
 
       <style>
         :host {
-          --primary-rgb: 255, 85, 0;
+          --primary-rgb: 255, 107, 0;
           --secondary-rgb: 255, 140, 0;
+          --cyber-blue-rgb: 255, 107, 0;
           --accent: rgb(var(--primary-rgb));
           --accent-glow: rgba(var(--primary-rgb), 0.45);
           --accent-glow-intense: rgba(var(--primary-rgb), 0.85);
-          --bg-pure: #0d0d0d; 
-          --bg-card: rgba(22, 22, 22, 0.94);
-          --border-glass: rgba(255, 85, 0, 0.18);
-          --border-glass-bright: rgba(255, 85, 0, 0.4);
+          --bg-pure: #0d0f12; 
+          --bg-card: rgba(18, 20, 26, 0.72);
+          --border-glass: rgba(255, 107, 0, 0.15);
+          --border-glass-bright: rgba(255, 107, 0, 0.35);
           --heading-dynamic: #ffffff;
-          --text-main: #f5f5f5;
-          --text-muted: #a0a0a0;
-          --text-dark: #666666;
+          --text-main: #f5f7fa;
+          --text-muted: #94a3b8;
+          --text-dark: #64748b;
           --btn-main-bg: #ffffff;
-          --btn-main-text: #0d0d0d;
-          --player-shadow: 0 45px 120px -20px rgba(255, 85, 0, 0.25);
+          --btn-main-text: #0d0f12;
+          --player-shadow: 0 45px 120px -20px rgba(255, 107, 0, 0.25);
           display: block; position: relative; width: 100%; min-height: 100vh;
-          background: radial-gradient(circle at 50% 0%, rgba(var(--primary-rgb), 0.14) 0%, transparent 60%), var(--bg-pure);
+          background: radial-gradient(circle at 50% 0%, rgba(var(--primary-rgb), 0.12) 0%, transparent 60%), var(--bg-pure);
           color: var(--text-main); font-family: 'Manrope', sans-serif; overflow-x: hidden;
           font-size: clamp(14px, 0.8vw + 0.45rem, 22px); box-sizing: border-box;
         }
 
         :host([data-theme="light"]) {
-          --primary-rgb: 230, 75, 0;
-          --accent: #e64b00;
-          --accent-glow: rgba(230, 75, 0, 0.35);
-          --bg-pure: #f4f4f4;
-          --bg-card: rgba(255, 255, 255, 0.95);
+          --primary-rgb: 230, 90, 0;
+          --accent: #e65a00;
+          --accent-glow: rgba(230, 90, 0, 0.35);
+          --bg-pure: #f8fafc;
+          --bg-card: rgba(255, 255, 255, 0.85);
           --border-glass: rgba(0, 0, 0, 0.1);
           --border-glass-bright: rgba(0, 0, 0, 0.25);
           --heading-dynamic: #000000;
-          --text-main: #121212;
-          --text-muted: #666666;
-          --text-dark: #999999;
-          --btn-main-bg: #121212;
+          --text-main: #0f172a;
+          --text-muted: #475569;
+          --text-dark: #94a3b8;
+          --btn-main-bg: #0f172a;
           --btn-main-text: #ffffff;
         }
 
@@ -160,64 +154,42 @@ class CricxCrateUI extends HTMLElement {
         .container { width: min(1500px, 92vw); margin: 0 auto; padding: 0 0 clamp(40px, 6vw, 100px); position: relative; z-index: 10; }
         .nav { height: clamp(64px, 8.5vh, 96px); display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 50; }
         .brand { display: inline-flex; align-items: center; gap: clamp(10px, 1.2vw, 16px); text-decoration: none; }
-        .brand-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(20px, 2.2vw, 28px); font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: var(--heading-dynamic); }
-        .nav-actions { display: flex; align-items: center; gap: clamp(8px, 1vw, 14px); }
-        
-        /* Theme Switcher moved to Top Right */
-        .theme-switch-deck { background: var(--bg-card); border: 1px solid var(--border-glass-bright); border-radius: 100px; backdrop-filter: blur(24px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); padding: 3px; display: flex; align-items: center; gap: 3px; }
-        .mode-toggle-btn { height: clamp(26px, 2.2vw, 32px); padding: 0 clamp(8px, 0.9vw, 12px); display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: clamp(7px, 0.6vw, 8.5px); font-weight: 500; letter-spacing: 1px; text-transform: uppercase; border-radius: 100px; cursor: pointer; transition: all 0.3s ease; }
-        .mode-toggle-btn i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; transition: all 0.3s ease; }
-        .mode-toggle-btn.active { background: var(--accent); color: #fff; box-shadow: 0 0 12px var(--accent-glow); }
-        .mode-toggle-btn.active i { background: #fff; }
+        .brand-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(20px, 2.2vw, 28px); font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: var(--heading-dynamic); transition: color 0.25s ease; }
 
+        .nav-actions { display: flex; align-items: center; gap: clamp(8px, 1vw, 14px); }
         .live-pill-badge { height: clamp(32px, 2.8vw, 40px); padding: 0 clamp(12px, 1.2vw, 16px); display: flex; align-items: center; gap: 6px; background: var(--bg-card); border: 1px solid var(--border-glass); backdrop-filter: blur(16px); border-radius: 100px; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: clamp(8px, 0.7vw, 10px); letter-spacing: 1.2px; text-transform: uppercase; }
         .pulsing-live-dot { width: 6px; height: 6px; background: #ff2a2a; border-radius: 50%; box-shadow: 0 0 12px #ff2a2a; animation: liveSignal 1.5s ease-in-out infinite; }
         @keyframes liveSignal { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.8); } }
         
-        .nav-join-btn { height: clamp(32px, 2.8vw, 40px); padding: 0 clamp(16px, 1.5vw, 24px); display: inline-flex; align-items: center; justify-content: center; border-radius: 100px; background: var(--btn-main-bg); color: var(--btn-main-text); text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: clamp(10.5px, 0.85vw, 13px); font-weight: 800; letter-spacing: 1px; transition: all 0.3s ease; }
+        .nav-join-btn { height: clamp(32px, 2.8vw, 40px); padding: 0 clamp(16px, 1.5vw, 24px); display: inline-flex; align-items: center; justify-content: center; border-radius: 100px; background: var(--btn-main-bg); color: var(--btn-main-text); text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: clamp(10.5px, 0.85vw, 13px); font-weight: 800; letter-spacing: 1px; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
         .nav-join-btn:hover { background: var(--accent); color: #fff; box-shadow: 0 0 20px var(--accent-glow); transform: translateY(-2px); }
-
         .hero { position: relative; padding: clamp(20px, 3.5vw, 56px) 0 clamp(14px, 2.2vw, 36px); }
         .hero-tag { display: inline-flex; align-items: center; gap: 10px; font-family: 'Space Grotesk', sans-serif; color: var(--accent); font-size: clamp(12px, 1.1vw, 15px); font-weight: 800; letter-spacing: 3px; text-transform: uppercase; }
         .hero-tag::before { content: ""; width: clamp(20px, 2.2vw, 34px); height: 2px; background: var(--accent); border-radius: 2px; }
         .hero-headline { margin-top: clamp(8px, 1.2vw, 18px); font-family: 'Syne', sans-serif; font-size: clamp(40px, 9.2vw, 130px); line-height: 0.86; letter-spacing: -0.06em; font-weight: 900; text-transform: uppercase; }
-        .hero-headline .accent-txt { color: var(--accent); background: linear-gradient(135deg, #ff5500 0%, #ffaa00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero-headline .accent-txt { color: var(--accent); background: linear-gradient(135deg, #ff6b00 0%, #ff8c00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .hero-details { margin-top: clamp(12px, 1.5vw, 22px); display: flex; align-items: center; flex-wrap: wrap; gap: clamp(6px, 0.9vw, 12px); color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: clamp(8px, 0.7vw, 10px); letter-spacing: 1.4px; text-transform: uppercase; }
         .hero-details b { color: var(--text-main); font-weight: 600; }
         .meta-separator { width: 3px; height: 3px; border-radius: 50%; background: var(--text-dark); }
         .track-separator-beam { width: 100%; height: 1px; background: linear-gradient(90deg, var(--accent) 0%, var(--border-glass) 45%, transparent 100%); margin-bottom: clamp(14px, 1.6vw, 22px); }
+
         .player-rig-box { width: 100%; aspect-ratio: 16/9; position: relative; background: #000; overflow: hidden; border-radius: clamp(14px, 1.8vw, 26px); border: 1px solid var(--border-glass-bright); box-shadow: var(--player-shadow); isolation: isolate; transition: transform 0.4s ease; }
-        .player-rig-box:hover { transform: translateY(-5px); box-shadow: 0 55px 120px -10px rgba(255, 85, 0, 0.4); }
+        .player-rig-box:hover { transform: translateY(-5px); box-shadow: 0 55px 120px -10px rgba(255, 107, 0, 0.4); }
         .player-rig-box::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0.9; z-index: 12; pointer-events: none; }
         
         iframe#player { width: 100%; height: 100%; border: none; display: block; position: relative; z-index: 5; border-radius: inherit; }
         .player-rig-box.fs-active { position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100dvh !important; max-width: none !important; max-height: none !important; z-index: 9999999 !important; border-radius: 0 !important; border: none !important; transform: none !important; background: #000 !important; }
         
-        /* Popup 1: Welcome Overlay (Strictly inside Player Container) */
-        .welcome-modal-overlay { position: absolute; inset: 0; background: rgba(13, 13, 13, 0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); z-index: 50; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 2s cubic-bezier(0.16, 1, 0.3, 1); }
-        .welcome-modal-overlay.show { opacity: 1; pointer-events: all; }
-        .welcome-modal-box { background: var(--bg-card); border: 1px solid var(--border-glass-bright); border-radius: 24px; padding: clamp(20px, 3.5vw, 36px); text-align: center; max-width: 380px; width: 88%; transform: scale(0.92); transition: transform 2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 30px 90px rgba(0, 0, 0, 0.85); }
-        .welcome-modal-overlay.show .welcome-modal-box { transform: scale(1); }
-        .welcome-icon { width: 60px; height: 60px; margin: 0 auto 16px; background: rgba(255, 85, 0, 0.12); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 85, 0, 0.3); }
-        .welcome-icon svg { width: 30px; height: 30px; fill: var(--accent); }
-        .welcome-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(19px, 2.2vw, 24px); font-weight: 900; color: #fff; margin-bottom: 8px; }
-        .welcome-desc { font-size: clamp(12px, 0.95vw, 13.5px); color: var(--text-muted); line-height: 1.4; margin-bottom: 22px; }
-        .welcome-btn-join { display: block; width: 100%; padding: 12px; border-radius: 100px; background: linear-gradient(135deg, #ff5500 0%, #ff9900 100%); color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; text-decoration: none; box-shadow: 0 8px 25px rgba(255, 85, 0, 0.4); cursor: pointer; transition: all 0.3s ease; margin-bottom: 10px; }
-        .welcome-btn-join:hover { filter: brightness(1.1); transform: translateY(-1px); }
-        .welcome-btn-close { background: transparent; border: none; color: var(--text-muted); font-size: 11px; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 4px; transition: color 0.2s; }
-        .welcome-btn-close:hover { color: #fff; }
-
-        /* Popup 2: Stream Lock Overlay (Strictly inside Player Container) */
-        .tg-modal-overlay { position: absolute; inset: 0; background: rgba(13, 13, 13, 0.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 50; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .tg-modal-overlay { position: absolute; inset: 0; background: rgba(2, 4, 8, 0.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); z-index: 20; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .tg-modal-overlay.show { opacity: 1; pointer-events: all; }
-        .tg-modal-box { background: var(--bg-card); border: 1px solid var(--border-glass-bright); border-radius: 20px; padding: clamp(20px, 3vw, 32px); text-align: center; max-width: 340px; width: 88%; transform: translateY(20px) scale(0.95); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8); }
+        .tg-modal-box { background: var(--bg-card); border: 1px solid var(--border-glass-bright); border-radius: 24px; padding: clamp(24px, 4vw, 40px); text-align: center; max-width: 380px; width: 88%; transform: translateY(30px) scale(0.95); transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8), inset 0 0 30px rgba(255, 107, 0, 0.05); }
         .tg-modal-overlay.show .tg-modal-box { transform: translateY(0) scale(1); }
-        .tg-modal-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(17px, 2vw, 20px); font-weight: 800; color: #fff; margin-bottom: 6px; }
-        .tg-modal-desc { font-size: clamp(11.5px, 0.9vw, 13px); color: var(--text-muted); line-height: 1.4; margin-bottom: 18px; }
-        .tg-modal-btn-join { display: block; width: 100%; padding: 12px; border-radius: 10px; background: linear-gradient(135deg, #ff5500 0%, #ff8800 100%); color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; transition: all 0.2s ease; box-shadow: 0 8px 25px rgba(255, 85, 0, 0.35); cursor: pointer; margin-bottom: 10px; }
-        .tg-modal-btn-join:hover { filter: brightness(1.1); transform: translateY(-1px); }
-        .tg-modal-btn-joined { background: transparent; border: none; color: var(--text-muted); font-size: 11px; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 4px; transition: color 0.2s; }
-        .tg-modal-btn-joined:hover { color: #fff; }
+        .tg-modal-icon { width: 64px; height: 64px; margin: 0 auto 20px; background: rgba(255, 107, 0, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 107, 0, 0.2); box-shadow: 0 0 20px rgba(255, 107, 0, 0.2); }
+        .tg-modal-icon svg { width: 32px; height: 32px; fill: var(--accent); }
+        .tg-modal-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(20px, 2.5vw, 24px); font-weight: 800; color: #fff; margin-bottom: 8px; letter-spacing: -0.02em; }
+        .tg-modal-desc { font-size: clamp(12px, 1vw, 14px); color: var(--text-muted); line-height: 1.5; margin-bottom: 24px; }
+        .tg-modal-btn-join { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 50px; border-radius: 100px; background: linear-gradient(135deg, #ff6b00 0%, #ff8c00 100%); color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 10px 30px rgba(255, 107, 0, 0.3); cursor: pointer; }
+        .tg-modal-btn-join:hover { transform: translateY(-2px); box-shadow: 0 15px 40px rgba(255, 107, 0, 0.5); filter: brightness(1.1); }
 
         .player-meta-bar { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: clamp(14px, 1.6vw, 22px) 2px 0; flex-wrap: wrap; }
         .stream-title-group { display: flex; flex-direction: column; gap: 4px; }
@@ -242,280 +214,191 @@ class CricxCrateUI extends HTMLElement {
         .footer { margin-top: clamp(44px, 6vw, 80px); border-top: 1px solid var(--border-glass); padding: 20px 0 calc(20px + env(safe-area-inset-bottom)); display: flex; align-items: center; justify-content: space-between; color: var(--text-dark); font-family: 'Space Grotesk', sans-serif; font-size: clamp(8.5px, 0.7vw, 10.5px); letter-spacing: 1.2px; text-transform: uppercase; font-weight: 600; }
         .footer strong { color: var(--text-muted); }
 
+        .theme-switch-deck { position: fixed; right: clamp(14px, 2vw, 28px); bottom: clamp(14px, 2vw, 28px); z-index: 900; background: var(--bg-card); border: 1px solid var(--border-glass-bright); border-radius: 100px; backdrop-filter: blur(24px); box-shadow: 0 18px 50px rgba(0, 0, 0, 0.4); padding: 4px; display: flex; align-items: center; gap: 4px; }
+        .mode-toggle-btn { height: clamp(28px, 2.2vw, 34px); padding: 0 clamp(8px, 0.9vw, 12px); display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: clamp(7px, 0.6vw, 8.5px); font-weight: 500; letter-spacing: 1px; text-transform: uppercase; border-radius: 100px; cursor: pointer; transition: all 0.3s ease; }
+        .mode-toggle-btn i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; transition: all 0.3s ease; }
+        .mode-toggle-btn.active { background: var(--accent); color: #fff; box-shadow: 0 0 15px var(--accent-glow); }
+        .mode-toggle-btn.active i { background: #fff; }
+
         @media (max-width: 680px) {
           .live-pill-badge { display: none; }
           .community-body { grid-template-columns: 1fr; gap: 18px; }
           .comm-btn-prime { width: 100%; justify-content: center; }
+          .theme-switch-deck { right: 50%; transform: translateX(50%); bottom: calc(10px + env(safe-area-inset-bottom)); }
           .player-meta-bar { flex-direction: column; align-items: flex-start; }
           .share-action-btn { width: 100%; justify-content: center; }
         }
       </style>
-      <canvas id="warpGridCanvas"></canvas>
+      <div id="warpGridCanvas"></div>
+
       <div class="container">
-        <header class="nav">
-          <a class="brand" href="${this.CONFIG.telegramLink}" target="_blank" rel="noopener">
-            <div class="brand-title">CricxCrate</div>
+        <nav class="nav">
+          <a href="#" class="brand">
+            <span class="brand-title">CricXCrate</span>
           </a>
           <div class="nav-actions">
-            <!-- Theme Switcher Deck placed on Top Right -->
-            <aside class="theme-switch-deck">
-              <button class="mode-toggle-btn active" id="themeDarkBtn"><i></i> Obsidian</button>
-              <button class="mode-toggle-btn" id="themeLightBtn"><i></i> Ceramic</button>
-            </aside>
-            <div class="live-pill-badge"><i class="pulsing-live-dot"></i>ON AIR</div>
-            <a class="nav-join-btn" href="${this.CONFIG.telegramLink}" target="_blank" rel="noopener">JOIN</a>
+            <div class="live-pill-badge">
+              <span class="pulsing-live-dot"></span>
+              <span>FanCode Feed</span>
+            </div>
+            <a href="${this.CONFIG.telegramLink}" target="_blank" class="nav-join-btn">Join Telegram</a>
           </div>
-        </header>
+        </nav>
 
         <section class="hero">
-          <div class="hero-tag">LIVE BROADCAST</div>
-          <h1 class="hero-headline">CRICXCRATE<br><span class="accent-txt">STREAM.</span></h1>
+          <div class="hero-tag">Live Broadcast Feed</div>
+          <h1 class="hero-headline">FanCode <span class="accent-txt">HD Live</span></h1>
           <div class="hero-details">
-            <b>PREMIUM FEED</b><span class="meta-separator"></span>HD STREAM<span class="meta-separator"></span>LIVE NOW
+            <span>Secure Stream Node</span>
+            <span class="meta-separator"></span>
+            <span>Ultra Low Latency</span>
+            <span class="meta-separator"></span>
+            <b>Status: Active</b>
           </div>
         </section>
 
-        <main class="broadcast">
-          <div class="track-separator-beam"></div>
+        <div class="track-separator-beam"></div>
 
-          <div class="player-rig-box" id="playerContainer">
-            <iframe id="player" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>
-            
-            <!-- Welcome Overlay (Inside Player Box) -->
-            <div class="welcome-modal-overlay" id="welcomeModal">
-              <div class="welcome-modal-box">
-                <div class="welcome-icon">
-                  <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.19-.08-.05-.19-.02-.27 0-.11.03-1.84 1.18-5.21 3.45-.49.33-.94.49-1.35.48-.45-.01-1.31-.25-1.95-.46-.79-.26-1.42-.4-1.36-.84.03-.23.35-.47.96-.73 3.77-1.64 6.29-2.73 7.55-3.25 3.59-1.49 4.33-1.75 4.81-1.76.11 0 .35.03.48.14.11.09.14.22.15.34-.01.07-.01.19-.02.26z"/></svg>
-                </div>
-                <h3 class="welcome-title">Welcome to CricxCrate</h3>
-                <p class="welcome-desc">Join our official Telegram channel now for continuous high-speed streaming links and match updates.</p>
-                <a class="welcome-btn-join" id="welcomeJoinBtn" href="${this.CONFIG.telegramLink}" target="_blank" rel="noopener">JOIN TELEGRAM CHANNEL</a>
-                <button class="welcome-btn-close" id="welcomeCloseBtn">Continue to Stream</button>
+        <div class="player-rig-box" id="playerContainer">
+          <div class="tg-modal-overlay" id="tgModal">
+            <div class="tg-modal-box">
+              <div class="tg-modal-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.11.03-1.85 1.18-5.23 3.48-.49.34-.94.51-1.34.5-.44-.01-1.28-.24-1.9-.44-.77-.24-1.38-.37-1.33-.78.03-.22.33-.44.91-.67 3.56-1.54 5.94-2.56 7.14-3.06 3.4-1.42 4.11-1.66 4.57-1.67.1 0 .33.02.48.14.12.1.15.23.17.33 0 .07.01.23 0 .36z"/></svg>
               </div>
-            </div>
-
-            <!-- Stream Lock Overlay (Inside Player Box) -->
-            <div class="tg-modal-overlay" id="tgPremiumModal">
-              <div class="tg-modal-box">
-                <h3 class="tg-modal-title">Join For Streaming Links</h3>
-                <p class="tg-modal-desc">Preview ended. Join our Telegram channel to unlock 24-hour uninterrupted HD access.</p>
-                <a class="tg-modal-btn-join" id="tgJoinModalBtn" href="${this.CONFIG.telegramLink}" target="_blank" rel="noopener">JOIN NOW</a>
-                <button class="tg-modal-btn-joined" id="tgIHaveJoinedBtn">I've joined</button>
-              </div>
+              <h3 class="tg-modal-title">Join Telegram Channel</h3>
+              <p class="tg-modal-desc">To continue watching uninterrupted live streams and get instant updates on upcoming matches, join our official Telegram community.</p>
+              <a href="${this.CONFIG.telegramLink}" target="_blank" class="tg-modal-btn-join">Join Now</a>
             </div>
           </div>
+          <iframe id="player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen></iframe>
+        </div>
 
-          <div class="player-meta-bar">
-            <div class="stream-title-group">
-              <strong>CricxCrate Official · Live Broadcast</strong>
-              <span>Exclusive HD Access</span>
-            </div>
-            <button class="share-action-btn" id="btnShare">
-              <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
-              <span id="shareBtnText">SHARE STREAM</span>
-            </button>
+        <div class="player-meta-bar">
+          <div class="stream-title-group">
+            <strong>FanCode Live Streaming Feed</strong>
+            <span>Secure Proxy Server Node</span>
           </div>
-        </main>
+          <button class="share-action-btn" id="shareBtn">
+            <svg viewBox="0 0 24 24" fill="none"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+            Share Stream
+          </button>
+        </div>
 
         <section class="community">
-          <div class="community-header"><div class="comm-tag">CRICXCRATE</div></div>
+          <div class="community-header">
+            <span class="comm-tag">Community Hub</span>
+          </div>
           <div class="community-body">
-            <h2 class="comm-heading">Stay connected.<br><span>Never miss a match.</span></h2>
-            <a class="comm-btn-prime" href="${this.CONFIG.telegramLink}" target="_blank" rel="noopener">JOIN COMMUNITY</a>
+            <h2 class="comm-heading">Never miss a match. <span>Join our community network.</span></h2>
+            <a href="${this.CONFIG.telegramLink}" target="_blank" class="comm-btn-prime">Join Telegram Channel</a>
           </div>
         </section>
 
         <footer class="footer">
-          <span>© 2026 <strong>CRICXCRATE</strong></span>
-          <span>LIVE STREAM · NEON SUITE PRO</span>
+          <span>&copy; 2026 CricXCrate. All rights reserved.</span>
+          <strong>FanCode Live Node</strong>
         </footer>
+      </div>
+
+      <div class="theme-switch-deck">
+        <button class="mode-toggle-btn active" data-mode="dark"><i></i> Dark</button>
+        <button class="mode-toggle-btn" data-mode="light"><i></i> Light</button>
       </div>
     `;
   }
-
-  checkUnlockStatus() {
-    const savedTime = localStorage.getItem('cricxcrate_unlocked_time');
-    if (savedTime) {
-      if (Date.now() - parseInt(savedTime, 10) < 24 * 60 * 60 * 1000) {
-        this.isStreamUnlocked = true;
-      } else {
-        localStorage.removeItem('cricxcrate_unlocked_time');
-      }
-    }
-  }
-
-  triggerLock() {
-    if (this.isStreamUnlocked) return;
-    const iframe = this._shadow.getElementById('player');
-    if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage('cc-force-pause', '*');
-    try {
-      if (document.fullscreenElement) document.exitFullscreen().catch(()=>{});
-      else if (document.webkitFullscreenElement) document.webkitExitFullscreen();
-    } catch(err){}
-    this._shadow.getElementById('tgPremiumModal').classList.add('show');
-  }
-
-  unlockStream() {
-    localStorage.setItem('cricxcrate_unlocked_time', Date.now().toString());
-    this.isStreamUnlocked = true;
-    this._shadow.getElementById('welcomeModal').classList.remove('show');
-    this._shadow.getElementById('tgPremiumModal').classList.remove('show');
-    const iframe = this._shadow.getElementById('player');
-    if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage('cc-force-play', '*');
-  }
-
-  initEventListeners() {
-    const btnShare = this._shadow.getElementById("btnShare");
-    const shareBtnText = this._shadow.getElementById("shareBtnText");
-    const welcomeJoinBtn = this._shadow.getElementById("welcomeJoinBtn");
-    const welcomeCloseBtn = this._shadow.getElementById("welcomeCloseBtn");
-    const joinModalBtn = this._shadow.getElementById("tgJoinModalBtn");
-    const iHaveJoinedBtn = this._shadow.getElementById("tgIHaveJoinedBtn");
-
-    welcomeJoinBtn.addEventListener("click", () => {
-      window.open(this.CONFIG.telegramLink, '_blank', 'noopener');
-    });
-
-    welcomeCloseBtn.addEventListener("click", () => {
-      this._shadow.getElementById('welcomeModal').classList.remove('show');
-    });
-
-    joinModalBtn.addEventListener("click", () => {
-      window.open(this.CONFIG.telegramLink, '_blank', 'noopener');
-    });
-
-    iHaveJoinedBtn.addEventListener("click", () => {
-      this.unlockStream();
-    });
-
-    btnShare.addEventListener("click", async () => {
-      const shareData = {
-        title: "CRICXCRATE — Live Stream",
-        text: "Watch live matches on CricxCrate!",
-        url: window.location.href
-      };
-      try {
-        if (navigator.share && /mobile|android|iphone|ipad|tablet/i.test(navigator.userAgent)) {
-          await navigator.share(shareData);
-        } else if (navigator.clipboard) {
-          await navigator.clipboard.writeText(window.location.href);
-          const originalText = shareBtnText.textContent;
-          shareBtnText.textContent = "COPIED!";
-          setTimeout(() => { shareBtnText.textContent = originalText; }, 1800);
-        }
-      } catch (err) {}
-    });
-  }
   initWarpField() {
     const canvas = this._shadow.getElementById('warpGridCanvas');
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    this.stars = [];
-    const starCount = Math.min(120, Math.floor(window.innerWidth / 12));
-    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
-    window.addEventListener('resize', resize);
-    resize();
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
 
-    for (let i = 0; i < starCount; i++) {
+    const numStars = 40;
+    this.stars = [];
+    for (let i = 0; i < numStars; i++) {
       this.stars.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        length: (Math.random() * 24 + 10) * this.SENSITIVITY * 0.8,
-        speed: (Math.random() * 2.5 + 1.2) * this.SENSITIVITY,
-        alpha: Math.random() * 0.5 + 0.15
+        x: (Math.random() - 0.5) * width * 2,
+        y: (Math.random() - 0.5) * height * 2,
+        z: Math.random() * width
       });
     }
 
     const render = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.lineWidth = 1.2;
-      this.stars.forEach(star => {
-        ctx.strokeStyle = `rgba(255, 85, 0, ${star.alpha})`; 
-        ctx.beginPath();
-        ctx.moveTo(star.x, star.y);
-        ctx.lineTo(star.x + star.length, star.y);
-        ctx.stroke();
-        star.x += star.speed;
-        if (star.x > canvas.width) {
-          star.x = -star.length;
-          star.y = Math.random() * canvas.height;
+      ctx.clearRect(0, 0, width, height);
+      const isDark = !this.hasAttribute('data-theme') || this.getAttribute('data-theme') === 'dark';
+      ctx.fillStyle = isDark ? 'rgba(255, 107, 0, 0.4)' : 'rgba(230, 90, 0, 0.25)';
+
+      for (let i = 0; i < this.stars.length; i++) {
+        let star = this.stars[i];
+        star.z -= 0.5;
+        if (star.z <= 0) star.z = width;
+
+        let k = 250 / star.z;
+        let px = star.x * k + width / 2;
+        let py = star.y * k + height / 2;
+
+        if (px >= 0 && px <= width && py >= 0 && py <= height) {
+          let size = Math.max(1, (1 - star.z / width) * 2);
+          ctx.fillRect(px, py, size, size);
         }
-      });
+      }
       this.animationFrameId = requestAnimationFrame(render);
     };
     render();
+
+    window.addEventListener('resize', () => {
+      if(!canvas) return;
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
   }
 
   initThemeSwitching() {
-    const darkBtn = this._shadow.getElementById("themeDarkBtn");
-    const lightBtn = this._shadow.getElementById("themeLightBtn");
-    const setTheme = (mode) => {
-      if (mode === "dark") {
-        this.removeAttribute("data-theme");
-        darkBtn.classList.add("active");
-        lightBtn.classList.remove("active");
-      } else {
-        this.setAttribute("data-theme", "light");
-        lightBtn.classList.add("active");
-        darkBtn.classList.remove("active");
-      }
-    };
-    darkBtn.addEventListener("click", () => setTheme("dark"));
-    lightBtn.addEventListener("click", () => setTheme("light"));
+    const buttons = this._shadow.querySelectorAll('.mode-toggle-btn');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        buttons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const mode = btn.getAttribute('data-mode');
+        if (mode === 'light') {
+          this.setAttribute('data-theme', 'light');
+        } else {
+          this.removeAttribute('data-theme');
+        }
+      });
+    });
+  }
+
+  initEventListeners() {
+    const shareBtn = this._shadow.getElementById('shareBtn');
+    if (shareBtn) {
+      shareBtn.addEventListener('click', () => {
+        if (navigator.share) {
+          navigator.share({ title: document.title, url: window.location.href }).catch(()=>{});
+        } else {
+          navigator.clipboard.writeText(window.location.href);
+          alert('Stream link copied to clipboard!');
+        }
+      });
+    }
   }
 
   setupIframePlayer() {
     const iframe = this._shadow.getElementById('player');
-    const streamUrl = this.CONFIG.streamManifest;
-
-    iframe.srcdoc = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/controls.css" crossorigin="anonymous">
-        <style>
-          body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
-          .shaka-video-container { width: 100%; height: 100%; }
-          video { width: 100%; height: 100%; object-fit: contain; }
-          :root { --shaka-primary-color: #ff5500; }
-        </style>
-        <script src="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/shaka-player.ui.js" crossorigin="anonymous"><\/script>
-      </head>
-      <body>
-        <div data-shaka-player-container class="shaka-video-container">
-          <video autoplay data-shaka-player id="video" crossorigin="anonymous"></video>
-        </div>
-        <script>
-          document.addEventListener('DOMContentLoaded', async () => {
-            shaka.polyfill.installAll();
-            if (!shaka.Player.isBrowserSupported()) return;
-
-            const video = document.getElementById('video');
-            const container = document.querySelector('[data-shaka-player-container]');
-            const ui = container['ui'];
-            const player = ui.getControls().getPlayer();
-
-            window.addEventListener('message', (e) => {
-              if (e.data === 'cc-force-pause') video.pause();
-              if (e.data === 'cc-force-play') video.play().catch(()=>{});
-            });
-
-            video.addEventListener('playing', () => {
-              window.parent.postMessage('cc-playing', '*');
-            });
-
-            try {
-              await player.load('${streamUrl}');
-              video.play().catch(() => {});
-            } catch (e) {}
-          });
-        <\/script>
-      </body>
-      </html>
-    `;
+    if (!iframe || !this.CONFIG.streamManifest) return;
+    iframe.src = this.CONFIG.streamManifest;
   }
+
+  triggerLock() {
+    this.isStreamUnlocked = true;
+    const modal = this._shadow.getElementById('tgModal');
+    if (modal) modal.classList.add('show');
+  }
+
+  checkUnlockStatus() {}
 }
 
-customElements.define('cricxcrate-ui', CricxCrateUI);
+customElements.define('cricxcrate-ui', CricXCrateUI);
     </script>
 </body>
 </html>
