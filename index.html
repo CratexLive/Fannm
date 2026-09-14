@@ -182,6 +182,20 @@ class CricXCrateUI extends HTMLElement {
       const triggerText = this._shadow.getElementById('dropdownTriggerText');
       if (triggerText) triggerText.textContent = this.CONFIG.streamTitle;
 
+      const items = this._shadow.querySelectorAll('.custom-dropdown-item');
+      items.forEach((item, idx) => {
+        if (idx === index) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
+
+      const playerContainer = this._shadow.getElementById('playerContainer');
+      if (playerContainer) {
+        playerContainer.innerHTML = `<iframe id="player" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>`;
+      }
+
       this.setupIframePlayer();
       this.closeDropdown();
 
