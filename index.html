@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FanCode Live - Shaka Pro</title>
+    <title>CricxCrate Live - Shaka Pro</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/controls.css" crossorigin="anonymous">
     <style>
         body { margin: 0; padding: 0; background-color: #0d0d0d; }
@@ -11,11 +11,11 @@
 </head>
 <body>
 
-    <fancode-ui stream-url="/?url=https%3A%2F%2Fdai-fancode.pages.dev%2Fmumbai%2F4248679_english_hls_55e888c33f12582_1ta-di_h264%2Findex.m3u8"></fancode-ui>
+    <cricxcrate-ui stream-url="/?url=https%3A%2F%2Fdai-fancode.pages.dev%2Fmumbai%2F4248679_english_hls_55e888c33f12582_1ta-di_h264%2Findex.m3u8"></cricxcrate-ui>
 
     <script src="https://cdn.jsdelivr.net/npm/shaka-player@latest/dist/shaka-player.ui.js" crossorigin="anonymous"></script>
     <script>
-class FanCodeUI extends HTMLElement {
+class CricxCrateUI extends HTMLElement {
   static get observedAttributes() {
     return ['stream-url'];
   }
@@ -36,7 +36,7 @@ class FanCodeUI extends HTMLElement {
     this.stars = [];
 
     this.msgHandler = (e) => {
-      if (e.data === 'fc-fs-enter') {
+      if (e.data === 'cc-fs-enter') {
         const rig = this._shadow.getElementById('playerContainer');
         if (rig) {
           rig.classList.add('fs-active');
@@ -46,7 +46,7 @@ class FanCodeUI extends HTMLElement {
             if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(()=>{});
           } catch(err){}
         }
-      } else if (e.data === 'fc-fs-exit') {
+      } else if (e.data === 'cc-fs-exit') {
         const rig = this._shadow.getElementById('playerContainer');
         if (rig) {
           rig.classList.remove('fs-active');
@@ -58,7 +58,7 @@ class FanCodeUI extends HTMLElement {
         }
       }
 
-      if (e.data === 'fc-playing') {
+      if (e.data === 'cc-playing') {
         if (!this.isStreamUnlocked && !this.lockTimer) {
           this.lockTimer = setTimeout(() => this.triggerLock(), this.PREVIEW_TIME);
         }
@@ -91,7 +91,6 @@ class FanCodeUI extends HTMLElement {
     this.initEventListeners();
     this.setupIframePlayer();
 
-    // Show initial welcome popup after a brief moment
     setTimeout(() => {
       const welcomeModal = this._shadow.getElementById('welcomeModal');
       if (welcomeModal) welcomeModal.classList.add('show');
@@ -120,12 +119,11 @@ class FanCodeUI extends HTMLElement {
         :host {
           --primary-rgb: 255, 85, 0;
           --secondary-rgb: 255, 140, 0;
-          --cyber-blue-rgb: 255, 100, 0;
           --accent: rgb(var(--primary-rgb));
           --accent-glow: rgba(var(--primary-rgb), 0.45);
           --accent-glow-intense: rgba(var(--primary-rgb), 0.85);
           --bg-pure: #0d0d0d; 
-          --bg-card: rgba(22, 22, 22, 0.88);
+          --bg-card: rgba(22, 22, 22, 0.94);
           --border-glass: rgba(255, 85, 0, 0.18);
           --border-glass-bright: rgba(255, 85, 0, 0.4);
           --heading-dynamic: #ffffff;
@@ -146,7 +144,7 @@ class FanCodeUI extends HTMLElement {
           --accent: #e64b00;
           --accent-glow: rgba(230, 75, 0, 0.35);
           --bg-pure: #f4f4f4;
-          --bg-card: rgba(255, 255, 255, 0.92);
+          --bg-card: rgba(255, 255, 255, 0.95);
           --border-glass: rgba(0, 0, 0, 0.1);
           --border-glass-bright: rgba(0, 0, 0, 0.25);
           --heading-dynamic: #000000;
@@ -162,14 +160,21 @@ class FanCodeUI extends HTMLElement {
         .container { width: min(1500px, 92vw); margin: 0 auto; padding: 0 0 clamp(40px, 6vw, 100px); position: relative; z-index: 10; }
         .nav { height: clamp(64px, 8.5vh, 96px); display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 50; }
         .brand { display: inline-flex; align-items: center; gap: clamp(10px, 1.2vw, 16px); text-decoration: none; }
-        .brand-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(20px, 2.2vw, 28px); font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: var(--heading-dynamic); transition: color 0.25s ease; }
-
+        .brand-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(20px, 2.2vw, 28px); font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: var(--heading-dynamic); }
         .nav-actions { display: flex; align-items: center; gap: clamp(8px, 1vw, 14px); }
+        
+        /* Theme Switcher moved to Top Right */
+        .theme-switch-deck { background: var(--bg-card); border: 1px solid var(--border-glass-bright); border-radius: 100px; backdrop-filter: blur(24px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); padding: 3px; display: flex; align-items: center; gap: 3px; }
+        .mode-toggle-btn { height: clamp(26px, 2.2vw, 32px); padding: 0 clamp(8px, 0.9vw, 12px); display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: clamp(7px, 0.6vw, 8.5px); font-weight: 500; letter-spacing: 1px; text-transform: uppercase; border-radius: 100px; cursor: pointer; transition: all 0.3s ease; }
+        .mode-toggle-btn i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; transition: all 0.3s ease; }
+        .mode-toggle-btn.active { background: var(--accent); color: #fff; box-shadow: 0 0 12px var(--accent-glow); }
+        .mode-toggle-btn.active i { background: #fff; }
+
         .live-pill-badge { height: clamp(32px, 2.8vw, 40px); padding: 0 clamp(12px, 1.2vw, 16px); display: flex; align-items: center; gap: 6px; background: var(--bg-card); border: 1px solid var(--border-glass); backdrop-filter: blur(16px); border-radius: 100px; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: clamp(8px, 0.7vw, 10px); letter-spacing: 1.2px; text-transform: uppercase; }
         .pulsing-live-dot { width: 6px; height: 6px; background: #ff2a2a; border-radius: 50%; box-shadow: 0 0 12px #ff2a2a; animation: liveSignal 1.5s ease-in-out infinite; }
         @keyframes liveSignal { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.8); } }
         
-        .nav-join-btn { height: clamp(32px, 2.8vw, 40px); padding: 0 clamp(16px, 1.5vw, 24px); display: inline-flex; align-items: center; justify-content: center; border-radius: 100px; background: var(--btn-main-bg); color: var(--btn-main-text); text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: clamp(10.5px, 0.85vw, 13px); font-weight: 800; letter-spacing: 1px; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .nav-join-btn { height: clamp(32px, 2.8vw, 40px); padding: 0 clamp(16px, 1.5vw, 24px); display: inline-flex; align-items: center; justify-content: center; border-radius: 100px; background: var(--btn-main-bg); color: var(--btn-main-text); text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: clamp(10.5px, 0.85vw, 13px); font-weight: 800; letter-spacing: 1px; transition: all 0.3s ease; }
         .nav-join-btn:hover { background: var(--accent); color: #fff; box-shadow: 0 0 20px var(--accent-glow); transform: translateY(-2px); }
 
         .hero { position: relative; padding: clamp(20px, 3.5vw, 56px) 0 clamp(14px, 2.2vw, 36px); }
@@ -188,22 +193,22 @@ class FanCodeUI extends HTMLElement {
         iframe#player { width: 100%; height: 100%; border: none; display: block; position: relative; z-index: 5; border-radius: inherit; }
         .player-rig-box.fs-active { position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100dvh !important; max-width: none !important; max-height: none !important; z-index: 9999999 !important; border-radius: 0 !important; border: none !important; transform: none !important; background: #000 !important; }
         
-        /* Popup 1: Premium Big Welcome Popup (2s lazy fade-in animation) */
-        .welcome-modal-overlay { position: absolute; inset: 0; background: rgba(13, 13, 13, 0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); z-index: 25; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 2s cubic-bezier(0.16, 1, 0.3, 1); }
+        /* Popup 1: Welcome Overlay (Strictly inside Player Container) */
+        .welcome-modal-overlay { position: absolute; inset: 0; background: rgba(13, 13, 13, 0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); z-index: 50; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 2s cubic-bezier(0.16, 1, 0.3, 1); }
         .welcome-modal-overlay.show { opacity: 1; pointer-events: all; }
-        .welcome-modal-box { background: var(--bg-card); border: 1px solid var(--border-glass-bright); border-radius: 28px; padding: clamp(28px, 4.5vw, 48px); text-align: center; max-width: 440px; width: 90%; transform: scale(0.92); transition: transform 2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 30px 90px rgba(0, 0, 0, 0.85), inset 0 0 40px rgba(255, 85, 0, 0.08); }
+        .welcome-modal-box { background: var(--bg-card); border: 1px solid var(--border-glass-bright); border-radius: 24px; padding: clamp(20px, 3.5vw, 36px); text-align: center; max-width: 380px; width: 88%; transform: scale(0.92); transition: transform 2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 30px 90px rgba(0, 0, 0, 0.85); }
         .welcome-modal-overlay.show .welcome-modal-box { transform: scale(1); }
-        .welcome-icon { width: 72px; height: 72px; margin: 0 auto 20px; background: rgba(255, 85, 0, 0.12); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 85, 0, 0.3); box-shadow: 0 0 25px rgba(255, 85, 0, 0.25); }
-        .welcome-icon svg { width: 36px; height: 36px; fill: var(--accent); }
-        .welcome-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(22px, 2.6vw, 28px); font-weight: 900; color: #fff; margin-bottom: 10px; }
-        .welcome-desc { font-size: clamp(13px, 1.05vw, 15px); color: var(--text-muted); line-height: 1.5; margin-bottom: 28px; }
-        .welcome-btn-join { display: block; width: 100%; padding: 14px; border-radius: 100px; background: linear-gradient(135deg, #ff5500 0%, #ff9900 100%); color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; text-decoration: none; box-shadow: 0 10px 35px rgba(255, 85, 0, 0.4); cursor: pointer; transition: all 0.3s ease; margin-bottom: 12px; }
-        .welcome-btn-join:hover { filter: brightness(1.1); transform: translateY(-2px); }
-        .welcome-btn-close { background: transparent; border: none; color: var(--text-muted); font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 4px; transition: color 0.2s; }
+        .welcome-icon { width: 60px; height: 60px; margin: 0 auto 16px; background: rgba(255, 85, 0, 0.12); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 85, 0, 0.3); }
+        .welcome-icon svg { width: 30px; height: 30px; fill: var(--accent); }
+        .welcome-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(19px, 2.2vw, 24px); font-weight: 900; color: #fff; margin-bottom: 8px; }
+        .welcome-desc { font-size: clamp(12px, 0.95vw, 13.5px); color: var(--text-muted); line-height: 1.4; margin-bottom: 22px; }
+        .welcome-btn-join { display: block; width: 100%; padding: 12px; border-radius: 100px; background: linear-gradient(135deg, #ff5500 0%, #ff9900 100%); color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; text-decoration: none; box-shadow: 0 8px 25px rgba(255, 85, 0, 0.4); cursor: pointer; transition: all 0.3s ease; margin-bottom: 10px; }
+        .welcome-btn-join:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .welcome-btn-close { background: transparent; border: none; color: var(--text-muted); font-size: 11px; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 4px; transition: color 0.2s; }
         .welcome-btn-close:hover { color: #fff; }
 
-        /* Popup 2: Minimal 30s Stream Lock Popup */
-        .tg-modal-overlay { position: absolute; inset: 0; background: rgba(13, 13, 13, 0.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 20; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        /* Popup 2: Stream Lock Overlay (Strictly inside Player Container) */
+        .tg-modal-overlay { position: absolute; inset: 0; background: rgba(13, 13, 13, 0.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 50; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .tg-modal-overlay.show { opacity: 1; pointer-events: all; }
         .tg-modal-box { background: var(--bg-card); border: 1px solid var(--border-glass-bright); border-radius: 20px; padding: clamp(20px, 3vw, 32px); text-align: center; max-width: 340px; width: 88%; transform: translateY(20px) scale(0.95); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8); }
         .tg-modal-overlay.show .tg-modal-box { transform: translateY(0) scale(1); }
@@ -237,17 +242,10 @@ class FanCodeUI extends HTMLElement {
         .footer { margin-top: clamp(44px, 6vw, 80px); border-top: 1px solid var(--border-glass); padding: 20px 0 calc(20px + env(safe-area-inset-bottom)); display: flex; align-items: center; justify-content: space-between; color: var(--text-dark); font-family: 'Space Grotesk', sans-serif; font-size: clamp(8.5px, 0.7vw, 10.5px); letter-spacing: 1.2px; text-transform: uppercase; font-weight: 600; }
         .footer strong { color: var(--text-muted); }
 
-        .theme-switch-deck { position: fixed; right: clamp(14px, 2vw, 28px); bottom: clamp(14px, 2vw, 28px); z-index: 900; background: var(--bg-card); border: 1px solid var(--border-glass-bright); border-radius: 100px; backdrop-filter: blur(24px); box-shadow: 0 18px 50px rgba(0, 0, 0, 0.4); padding: 4px; display: flex; align-items: center; gap: 4px; }
-        .mode-toggle-btn { height: clamp(28px, 2.2vw, 34px); padding: 0 clamp(8px, 0.9vw, 12px); display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: clamp(7px, 0.6vw, 8.5px); font-weight: 500; letter-spacing: 1px; text-transform: uppercase; border-radius: 100px; cursor: pointer; transition: all 0.3s ease; }
-        .mode-toggle-btn i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; transition: all 0.3s ease; }
-        .mode-toggle-btn.active { background: var(--accent); color: #fff; box-shadow: 0 0 15px var(--accent-glow); }
-        .mode-toggle-btn.active i { background: #fff; }
-
         @media (max-width: 680px) {
           .live-pill-badge { display: none; }
           .community-body { grid-template-columns: 1fr; gap: 18px; }
           .comm-btn-prime { width: 100%; justify-content: center; }
-          .theme-switch-deck { right: 50%; transform: translateX(50%); bottom: calc(10px + env(safe-area-inset-bottom)); }
           .player-meta-bar { flex-direction: column; align-items: flex-start; }
           .share-action-btn { width: 100%; justify-content: center; }
         }
@@ -256,9 +254,14 @@ class FanCodeUI extends HTMLElement {
       <div class="container">
         <header class="nav">
           <a class="brand" href="${this.CONFIG.telegramLink}" target="_blank" rel="noopener">
-            <div class="brand-title">FANCODE</div>
+            <div class="brand-title">CricxCrate</div>
           </a>
           <div class="nav-actions">
+            <!-- Theme Switcher Deck placed on Top Right -->
+            <aside class="theme-switch-deck">
+              <button class="mode-toggle-btn active" id="themeDarkBtn"><i></i> Obsidian</button>
+              <button class="mode-toggle-btn" id="themeLightBtn"><i></i> Ceramic</button>
+            </aside>
             <div class="live-pill-badge"><i class="pulsing-live-dot"></i>ON AIR</div>
             <a class="nav-join-btn" href="${this.CONFIG.telegramLink}" target="_blank" rel="noopener">JOIN</a>
           </div>
@@ -266,7 +269,7 @@ class FanCodeUI extends HTMLElement {
 
         <section class="hero">
           <div class="hero-tag">LIVE BROADCAST</div>
-          <h1 class="hero-headline">FANCODE<br><span class="accent-txt">STREAM.</span></h1>
+          <h1 class="hero-headline">CRICXCRATE<br><span class="accent-txt">STREAM.</span></h1>
           <div class="hero-details">
             <b>PREMIUM FEED</b><span class="meta-separator"></span>HD STREAM<span class="meta-separator"></span>LIVE NOW
           </div>
@@ -278,20 +281,20 @@ class FanCodeUI extends HTMLElement {
           <div class="player-rig-box" id="playerContainer">
             <iframe id="player" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>
             
-            <!-- Popup 1: Initial Welcome Lazy Animated Popup -->
+            <!-- Welcome Overlay (Inside Player Box) -->
             <div class="welcome-modal-overlay" id="welcomeModal">
               <div class="welcome-modal-box">
                 <div class="welcome-icon">
                   <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.19-.08-.05-.19-.02-.27 0-.11.03-1.84 1.18-5.21 3.45-.49.33-.94.49-1.35.48-.45-.01-1.31-.25-1.95-.46-.79-.26-1.42-.4-1.36-.84.03-.23.35-.47.96-.73 3.77-1.64 6.29-2.73 7.55-3.25 3.59-1.49 4.33-1.75 4.81-1.76.11 0 .35.03.48.14.11.09.14.22.15.34-.01.07-.01.19-.02.26z"/></svg>
                 </div>
-                <h3 class="welcome-title">Welcome to FanCode Live</h3>
+                <h3 class="welcome-title">Welcome to CricxCrate</h3>
                 <p class="welcome-desc">Join our official Telegram channel now for continuous high-speed streaming links and match updates.</p>
                 <a class="welcome-btn-join" id="welcomeJoinBtn" href="${this.CONFIG.telegramLink}" target="_blank" rel="noopener">JOIN TELEGRAM CHANNEL</a>
                 <button class="welcome-btn-close" id="welcomeCloseBtn">Continue to Stream</button>
               </div>
             </div>
 
-            <!-- Popup 2: 30s Stream Lock Popup -->
+            <!-- Stream Lock Overlay (Inside Player Box) -->
             <div class="tg-modal-overlay" id="tgPremiumModal">
               <div class="tg-modal-box">
                 <h3 class="tg-modal-title">Join For Streaming Links</h3>
@@ -304,7 +307,7 @@ class FanCodeUI extends HTMLElement {
 
           <div class="player-meta-bar">
             <div class="stream-title-group">
-              <strong>FanCode Official · Live Broadcast</strong>
+              <strong>CricxCrate Official · Live Broadcast</strong>
               <span>Exclusive HD Access</span>
             </div>
             <button class="share-action-btn" id="btnShare">
@@ -315,7 +318,7 @@ class FanCodeUI extends HTMLElement {
         </main>
 
         <section class="community">
-          <div class="community-header"><div class="comm-tag">FANCODE</div></div>
+          <div class="community-header"><div class="comm-tag">CRICXCRATE</div></div>
           <div class="community-body">
             <h2 class="comm-heading">Stay connected.<br><span>Never miss a match.</span></h2>
             <a class="comm-btn-prime" href="${this.CONFIG.telegramLink}" target="_blank" rel="noopener">JOIN COMMUNITY</a>
@@ -323,25 +326,20 @@ class FanCodeUI extends HTMLElement {
         </section>
 
         <footer class="footer">
-          <span>© 2026 <strong>FANCODE</strong></span>
+          <span>© 2026 <strong>CRICXCRATE</strong></span>
           <span>LIVE STREAM · NEON SUITE PRO</span>
         </footer>
       </div>
-
-      <aside class="theme-switch-deck">
-        <button class="mode-toggle-btn active" id="themeDarkBtn"><i></i> Obsidian</button>
-        <button class="mode-toggle-btn" id="themeLightBtn"><i></i> Ceramic</button>
-      </aside>
     `;
   }
 
   checkUnlockStatus() {
-    const savedTime = localStorage.getItem('fancode_unlocked_time');
+    const savedTime = localStorage.getItem('cricxcrate_unlocked_time');
     if (savedTime) {
       if (Date.now() - parseInt(savedTime, 10) < 24 * 60 * 60 * 1000) {
         this.isStreamUnlocked = true;
       } else {
-        localStorage.removeItem('fancode_unlocked_time');
+        localStorage.removeItem('cricxcrate_unlocked_time');
       }
     }
   }
@@ -349,7 +347,7 @@ class FanCodeUI extends HTMLElement {
   triggerLock() {
     if (this.isStreamUnlocked) return;
     const iframe = this._shadow.getElementById('player');
-    if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage('fc-force-pause', '*');
+    if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage('cc-force-pause', '*');
     try {
       if (document.fullscreenElement) document.exitFullscreen().catch(()=>{});
       else if (document.webkitFullscreenElement) document.webkitExitFullscreen();
@@ -358,12 +356,12 @@ class FanCodeUI extends HTMLElement {
   }
 
   unlockStream() {
-    localStorage.setItem('fancode_unlocked_time', Date.now().toString());
+    localStorage.setItem('cricxcrate_unlocked_time', Date.now().toString());
     this.isStreamUnlocked = true;
     this._shadow.getElementById('welcomeModal').classList.remove('show');
     this._shadow.getElementById('tgPremiumModal').classList.remove('show');
     const iframe = this._shadow.getElementById('player');
-    if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage('fc-force-play', '*');
+    if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage('cc-force-play', '*');
   }
 
   initEventListeners() {
@@ -392,8 +390,8 @@ class FanCodeUI extends HTMLElement {
 
     btnShare.addEventListener("click", async () => {
       const shareData = {
-        title: "FANCODE — Live Stream",
-        text: "Watch live matches on FANCODE!",
+        title: "CRICXCRATE — Live Stream",
+        text: "Watch live matches on CricxCrate!",
         url: window.location.href
       };
       try {
@@ -489,10 +487,7 @@ class FanCodeUI extends HTMLElement {
         <script>
           document.addEventListener('DOMContentLoaded', async () => {
             shaka.polyfill.installAll();
-            if (!shaka.Player.isBrowserSupported()) {
-              console.error('Browser not supported for Shaka Player');
-              return;
-            }
+            if (!shaka.Player.isBrowserSupported()) return;
 
             const video = document.getElementById('video');
             const container = document.querySelector('[data-shaka-player-container]');
@@ -500,20 +495,18 @@ class FanCodeUI extends HTMLElement {
             const player = ui.getControls().getPlayer();
 
             window.addEventListener('message', (e) => {
-              if (e.data === 'fc-force-pause') video.pause();
-              if (e.data === 'fc-force-play') video.play().catch(()=>{});
+              if (e.data === 'cc-force-pause') video.pause();
+              if (e.data === 'cc-force-play') video.play().catch(()=>{});
             });
 
             video.addEventListener('playing', () => {
-              window.parent.postMessage('fc-playing', '*');
+              window.parent.postMessage('cc-playing', '*');
             });
 
             try {
               await player.load('${streamUrl}');
               video.play().catch(() => {});
-            } catch (e) {
-              console.error('Error loading stream with Shaka Player', e);
-            }
+            } catch (e) {}
           });
         <\/script>
       </body>
@@ -522,7 +515,7 @@ class FanCodeUI extends HTMLElement {
   }
 }
 
-customElements.define('fancode-ui', FanCodeUI);
+customElements.define('cricxcrate-ui', CricxCrateUI);
     </script>
 </body>
 </html>
