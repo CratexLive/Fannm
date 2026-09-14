@@ -116,7 +116,8 @@ class CricXCrateUI extends HTMLElement {
           }
         } else if (line && !line.startsWith('#')) {
           let cleanUrl = line.split('|')[0].trim();
-          if (cleanUrl) {
+          // Filter out unwanted or broken paths, keep only active endpoints
+          if (cleanUrl && !cleanUrl.includes("error")) {
             this.channels.push({
               title: currentTitle || `Match ${this.channels.length + 1}`,
               url: `/?url=${encodeURIComponent(cleanUrl)}`
@@ -149,12 +150,29 @@ class CricXCrateUI extends HTMLElement {
       const titleEl = this._shadow.getElementById('activeStreamTitle');
       if (titleEl) titleEl.textContent = this.CONFIG.streamTitle;
 
+      const triggerText = this._shadow.getElementById('dropdownTriggerText');
+      if (triggerText) triggerText.textContent = this.CONFIG.streamTitle;
+
       this.setupIframePlayer();
+      this.closeDropdown();
     }
   }
+
+  toggleDropdown() {
+    const menu = this._shadow.getElementById('customDropdownMenu');
+    if (menu) menu.classList.toggle('open');
+  }
+
+  closeDropdown() {
+    const menu = this._shadow.getElementById('customDropdownMenu');
+    if (menu) menu.classList.remove('open');
+  }
   async render() {
-    let optionsHtml = this.channels.map((ch, idx) => `
-      <option value="${idx}" ${idx === this.currentChannelIndex ? 'selected' : ''}>${ch.title}</option>
+    let dropdownItemsHtml = this.channels.map((ch, idx) => `
+      <div class="custom-dropdown-item ${idx === this.currentChannelIndex ? 'active' : ''}" data-index="${idx}">
+        <span>${ch.title}</span>
+        <div class="radio-indicator"></div>
+      </div>
     `).join('');
 
     this._shadow.innerHTML = `
@@ -219,10 +237,25 @@ class CricXCrateUI extends HTMLElement {
         .hero-left h1 { font-family: 'Syne', sans-serif; font-size: clamp(28px, 5vw, 64px); line-height: 0.92; letter-spacing: -0.04em; font-weight: 900; text-transform: uppercase; }
         .hero-left h1 .accent-txt { color: var(--accent); background: linear-gradient(135deg, #00ffcc 0%, #0096ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
-        .minimal-switcher { display: inline-flex; align-items: center; gap: 8px; background: var(--bg-card); border: 1px solid var(--border-glass-bright); padding: 6px 14px; border-radius: 100px; backdrop-filter: blur(16px); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        .minimal-switcher span { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; }
-        .minimal-switcher select { background: transparent; color: var(--text-main); border: none; font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 700; outline: none; cursor: pointer; padding-right: 10px; }
-        .minimal-switcher select option { background: #0b131a; color: #fff; }
+        /* Custom Blended Dropdown Switcher */
+        .custom-dropdown-container { position: relative; display: inline-block; }
+        .custom-dropdown-trigger { display: inline-flex; align-items: center; gap: 10px; background: var(--bg-card); border: 1px solid var(--border-glass-bright); padding: 8px 16px; border-radius: 100px; backdrop-filter: blur(16px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); cursor: pointer; transition: all 0.25s ease; }
+        .custom-dropdown-trigger:hover { border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
+        .custom-dropdown-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; }
+        .custom-dropdown-value { font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 700; color: var(--text-main); max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .custom-dropdown-arrow { width: 10px; height: 10px; border-right: 2px solid var(--accent); border-bottom: 2px solid var(--accent); transform: rotate(45deg); transition: transform 0.3s ease; margin-left: 4px; }
+        
+        .custom-dropdown-menu { position: absolute; right: 0; top: calc(100% + 10px); width: 320px; background: rgba(8, 13, 20, 0.95); border: 1px solid var(--border-glass-bright); backdrop-filter: blur(25px); border-radius: 16px; box-shadow: 0 25px 60px rgba(0,0,0,0.7); z-index: 200; opacity: 0; pointer-events: none; transform: translateY(-10px) scale(0.98); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); overflow: hidden; }
+        .custom-dropdown-menu.open { opacity: 1; pointer-events: all; transform: translateY(0) scale(1); }
+        
+        .custom-dropdown-item { padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--border-glass); cursor: pointer; font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 600; color: var(--text-muted); transition: all 0.2s ease; }
+        .custom-dropdown-item:last-child { border-bottom: none; }
+        .custom-dropdown-item:hover { background: rgba(var(--primary-rgb), 0.08); color: var(--text-main); }
+        .custom-dropdown-item.active { background: rgba(var(--primary-rgb), 0.15); color: var(--accent); font-weight: 700; }
+        
+        .radio-indicator { width: 16px; height: 16px; border: 2px solid var(--border-glass-bright); border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
+        .custom-dropdown-item.active .radio-indicator { border-color: var(--accent); background: rgba(var(--primary-rgb), 0.2); box-shadow: 0 0 10px var(--accent-glow); }
+        .custom-dropdown-item.active .radio-indicator::after { content: ''; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
 
         .track-separator-beam { width: 100%; height: 1px; background: linear-gradient(90deg, var(--accent) 0%, var(--border-glass) 45%, transparent 100%); margin-bottom: 18px; }
 
@@ -276,6 +309,7 @@ class CricXCrateUI extends HTMLElement {
           .comm-btn-prime { width: 100%; justify-content: center; }
           .player-meta-bar { flex-direction: column; align-items: flex-start; }
           .share-action-btn { width: 100%; justify-content: center; }
+          .custom-dropdown-menu { width: 280px; right: auto; left: 0; }
         }
       </style>
       
@@ -296,11 +330,19 @@ class CricXCrateUI extends HTMLElement {
             <div class="hero-tag" style="font-family:'Space Grotesk';color:var(--accent);font-size:11px;font-weight:800;letter-spacing:2px;margin-bottom:6px;">LIVE BROADCAST</div>
             <h1>FANCODE <span class="accent-txt">STREAM</span></h1>
           </div>
-          <div class="minimal-switcher">
-            <span>Match</span>
-            <select id="channelSelector">
-              ${optionsHtml}
-            </select>
+          
+          <!-- Custom Blended Dropdown Switcher UI -->
+          <div class="custom-dropdown-container" id="dropdownContainer">
+            <div class="custom-dropdown-trigger" id="dropdownTrigger">
+              <div>
+                <div class="custom-dropdown-label">Match Stream</div>
+                <div class="custom-dropdown-value" id="dropdownTriggerText">${this.CONFIG.streamTitle}</div>
+              </div>
+              <div class="custom-dropdown-arrow"></div>
+            </div>
+            <div class="custom-dropdown-menu" id="customDropdownMenu">
+              ${dropdownItemsHtml}
+            </div>
           </div>
         </section>
 
@@ -390,16 +432,27 @@ class CricXCrateUI extends HTMLElement {
     const shareBtnText = this._shadow.getElementById("shareBtnText");
     const tgJoinBtn = this._shadow.getElementById("tgJoinBtn");
     const tgJoinedBtn = this._shadow.getElementById("tgJoinedBtn");
-    const channelSelector = this._shadow.getElementById("channelSelector");
+    const dropdownTrigger = this._shadow.getElementById("dropdownTrigger");
 
     tgJoinBtn.addEventListener("click", () => this.unlockStream());
     tgJoinedBtn.addEventListener("click", () => this.unlockStream());
 
-    if (channelSelector) {
-      channelSelector.addEventListener("change", (e) => {
-        this.switchChannel(parseInt(e.target.value, 10));
+    if (dropdownTrigger) {
+      dropdownTrigger.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.toggleDropdown();
       });
     }
+
+    this._shadow.addEventListener("click", (e) => {
+      const item = e.target.closest(".custom-dropdown-item");
+      if (item) {
+        const idx = parseInt(item.getAttribute("data-index"), 10);
+        this.switchChannel(idx);
+      } else {
+        this.closeDropdown();
+      }
+    });
 
     btnShare.addEventListener("click", async () => {
       const shareData = {
@@ -462,6 +515,7 @@ class CricXCrateUI extends HTMLElement {
             let playerInstance = null;
             
             function initPlyrAndOrientation() {
+              if (playerInstance) return;
               playerInstance = new Plyr(video, { 
                 autoplay: true,
                 controls: ['play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
@@ -486,9 +540,11 @@ class CricXCrateUI extends HTMLElement {
 
             if (Hls.isSupported()) {
               const hls = new Hls({ 
-                enableWorker: true, 
-                lowLatencyMode: true,
-                maxMaxBufferLength: 30,
+                startLevel: -1, 
+                capLevelToPlayerSize: true, 
+                autoLevelCapping: -1,
+                maxBufferLength: 30, 
+                maxMaxBufferLength: 60,
                 xhrSetup: function (xhr, url) {
                   xhr.withCredentials = false;
                 }
@@ -497,15 +553,22 @@ class CricXCrateUI extends HTMLElement {
               hls.loadSource(source);
               hls.attachMedia(video);
               
+              // Quality Selector Integration
               hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
                 initPlyrAndOrientation();
-                if(data.levels.length > 1) {
+                if(data.levels.length > 0) {
                    const availableQualities = data.levels.map(l => l.height).sort((a, b) => b - a);
                    playerInstance.options.quality = {
                      default: availableQualities[0],
                      options: availableQualities,
                      forced: true,
-                     onChange: (e) => { hls.currentLevel = data.levels.findIndex(l => l.height === e); }
+                     onChange: (newQuality) => {
+                       data.levels.forEach((level, index) => {
+                         if (level.height === newQuality) {
+                           hls.currentLevel = index;
+                         }
+                       });
+                     }
                    };
                 }
               });
