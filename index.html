@@ -141,9 +141,12 @@ class CricXCrateUI extends HTMLElement {
       }
 
       const urlParams = new URLSearchParams(window.location.search);
+      const sharedChannelIdx = urlParams.get('match');
       const sharedStreamUrl = urlParams.get('stream');
       
-      if (sharedStreamUrl) {
+      if (sharedChannelIdx !== null && this.channels[parseInt(sharedChannelIdx, 10)]) {
+        this.currentChannelIndex = parseInt(sharedChannelIdx, 10);
+      } else if (sharedStreamUrl) {
         const matchedIndex = this.channels.findIndex(ch => ch.url.includes(encodeURIComponent(sharedStreamUrl)) || ch.url.includes(sharedStreamUrl));
         if (matchedIndex !== -1) {
           this.currentChannelIndex = matchedIndex;
@@ -269,7 +272,7 @@ class CricXCrateUI extends HTMLElement {
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         #warpGridCanvas { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 0; opacity: 0.8; }
         .container { width: min(1500px, 92vw); margin: 0 auto; padding: 0 0 clamp(40px, 6vw, 100px); position: relative; z-index: 10; }
-        .nav { height: clamp(64px, 8.5vh, 96px); display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 50; }
+        .nav { height: clamp(64px, 8.5vh, 96px); display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 50; padding-right: 90px; }
         .brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; }
         .brand-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(18px, 2vw, 24px); font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: var(--heading-dynamic); }
 
@@ -345,7 +348,7 @@ class CricXCrateUI extends HTMLElement {
         .tg-modal-btn-joined { background: transparent; border: none; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; padding: 6px; }
         .tg-modal-btn-joined:hover { color: var(--accent); }
 
-        .theme-switch-deck { position: fixed; right: 20px; top: 20px; z-index: 900; background: var(--bg-card); border: 1px solid var(--border-glass-bright); border-radius: 100px; backdrop-filter: blur(20px); padding: 3px; display: flex; align-items: center; gap: 4px; }
+        .theme-switch-deck { position: fixed; right: 85px; top: 16px; z-index: 900; background: var(--bg-card); border: 1px solid var(--border-glass-bright); border-radius: 100px; backdrop-filter: blur(20px); padding: 3px; display: flex; align-items: center; gap: 4px; }
         .mode-toggle-btn { height: 30px; padding: 0 10px; display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 8px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; border-radius: 100px; cursor: pointer; transition: all 0.25s ease; }
         .mode-toggle-btn i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
         .mode-toggle-btn.active { background: var(--accent); color: #000; }
@@ -357,6 +360,7 @@ class CricXCrateUI extends HTMLElement {
           .player-meta-bar { flex-direction: column; align-items: flex-start; }
           .share-action-btn { width: 100%; justify-content: center; }
           .custom-dropdown-menu { width: 280px; right: auto; left: 0; }
+          .theme-switch-deck { right: 75px; }
         }
       </style>
       
@@ -501,14 +505,8 @@ class CricXCrateUI extends HTMLElement {
     });
 
     btnShare.addEventListener("click", async () => {
-      const currentCh = this.channels[this.currentChannelIndex];
-      let rawStreamParam = "";
-      try {
-        const parsed = new URL(currentCh.url, window.location.origin);
-        rawStreamParam = parsed.searchParams.get("url") || "";
-      } catch(err) {}
-
-      const shareUrl = rawStreamParam ? `${window.location.origin}/?stream=${encodeURIComponent(rawStreamParam)}` : window.location.href;
+      // Generate clean, minimal share link using match index parameter instead of long m3u8 url
+      const shareUrl = `${window.location.origin}/?match=${this.currentChannelIndex}`;
 
       const shareData = {
         title: `CRICXCRATE — ${this.CONFIG.streamTitle}`,
