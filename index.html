@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CricXCrate Live - Multi Stream</title>
+    <title>CricXCrate Live - Multi Stream Suite</title>
     <style>
         body { margin: 0; padding: 0; background-color: #050a0f; }
     </style>
@@ -140,7 +140,6 @@ class CricXCrateUI extends HTMLElement {
         }];
       }
 
-      // Check if URL has a shared direct match parameter (?stream=...)
       const urlParams = new URLSearchParams(window.location.search);
       const sharedStreamUrl = urlParams.get('stream');
       
@@ -149,7 +148,6 @@ class CricXCrateUI extends HTMLElement {
         if (matchedIndex !== -1) {
           this.currentChannelIndex = matchedIndex;
         } else {
-          // If shared custom link not in list, prepend it dynamically
           this.channels.unshift({
             title: "Shared Live Match",
             url: `/?url=${encodeURIComponent(sharedStreamUrl)}`
@@ -187,7 +185,6 @@ class CricXCrateUI extends HTMLElement {
       this.setupIframePlayer();
       this.closeDropdown();
 
-      // Trigger Telegram Popup Modal on Stream Change if not unlocked
       if (!this.isStreamUnlocked) {
         const modal = this._shadow.getElementById('tgInitialModal');
         if (modal) modal.classList.add('show');
@@ -490,7 +487,6 @@ class CricXCrateUI extends HTMLElement {
     });
 
     btnShare.addEventListener("click", async () => {
-      // Generate clean direct URL containing the active raw stream target
       const currentCh = this.channels[this.currentChannelIndex];
       let rawStreamParam = "";
       try {
@@ -519,7 +515,7 @@ class CricXCrateUI extends HTMLElement {
   }
   setupIframePlayer() {
     const iframe = this._shadow.getElementById('player');
-    const streamUrl = this.CONFIG.streamManifest;
+    const absoluteStreamUrl = window.location.origin + this.CONFIG.streamManifest;
 
     iframe.srcdoc = `
       <!DOCTYPE html>
@@ -551,7 +547,7 @@ class CricXCrateUI extends HTMLElement {
         <script>
           document.addEventListener('DOMContentLoaded', () => {
             const video = document.getElementById('vid');
-            const source = '${streamUrl}';
+            const source = '${absoluteStreamUrl}';
             const loader = document.getElementById('loader');
             const spinner = document.getElementById('spinner');
             const statusText = document.getElementById('statusText');
