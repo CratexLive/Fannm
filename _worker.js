@@ -31,7 +31,7 @@ export default {
       const isTextManifest = targetUrl.includes(".m3u8") || contentType.includes("mpegurl") || contentType.includes("text/plain");
 
       if (isTextManifest) {
-        const manifestText = await response.text();
+        let manifestText = await response.text();
         
         if (manifestText.includes("<html") || manifestText.includes("AccessDenied")) {
           return new Response(manifestText, { status: 502, headers: { "Access-Control-Allow-Origin": "*" } });
@@ -40,7 +40,9 @@ export default {
         const rewrittenManifest = manifestText
           .split("\n")
           .map((line) => {
-            const trimmed = line.trim();
+            let trimmed = line.trim();
+            
+            // 1. Handle normal chunk/sub-playlist lines
             if (trimmed && !trimmed.startsWith("#")) {
               try {
                 const absoluteUrl = new URL(trimmed, targetUrl).href;
@@ -49,6 +51,27 @@ export default {
                 return line;
               }
             }
+
+            // 2. Handle Encryption Keys (#EXT-X-KEY) inside manifests
+            if (trimmed.startsWith("#EXT-X-KEY")) {
+              return line.replace(/URI="(https?:\/\/[^"]+)"/g, (match, keyUrl) => {
+                try {
+                  const absoluteKeyUrl = new URL(keyUrl, targetUrl).href;
+                  return `URI="${url.origin}/?url=${encodeURIComponent(absoluteKeyUrl)}"`;
+                } catch (e) {
+                  return match;
+                }
+              }).replace(/URI=([^,\s]+)/g, (match, keyUrl) => {
+                try {
+                  let cleanUri = keyUrl.replace(/["']/g, "");
+                  const absoluteKeyUrl = new URL(cleanUri, targetUrl).href;
+                  return `URI="${url.origin}/?url=${encodeURIComponent(absoluteKeyUrl)}"`;
+                } catch (e) {
+                  return match;
+                }
+              });
+            }
+
             return line;
           })
           .join("\n");
