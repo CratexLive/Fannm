@@ -499,7 +499,6 @@ class CricXCrateUI extends HTMLElement {
                 enableWorker: true,
                 lowLatencyMode: false, 
                 capLevelOnFPSDrop: true,
-                // Fix for encrypted chunks and cross-origin keys
                 xhrSetup: function (xhr, url) {
                   xhr.withCredentials = false;
                 }
