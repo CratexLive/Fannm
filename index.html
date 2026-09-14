@@ -104,7 +104,7 @@ class CricXCrateUI extends HTMLElement {
       const text = await res.text();
       const lines = text.split('\n');
       
-      this.channels = [];
+      let rawChannels = [];
       let currentTitle = "";
 
       for (let i = 0; i < lines.length; i++) {
@@ -116,10 +116,9 @@ class CricXCrateUI extends HTMLElement {
           }
         } else if (line && !line.startsWith('#')) {
           let cleanUrl = line.split('|')[0].trim();
-          // Filter out unwanted or broken paths, keep only active endpoints
-          if (cleanUrl && !cleanUrl.includes("error")) {
-            this.channels.push({
-              title: currentTitle || `Match ${this.channels.length + 1}`,
+          if (cleanUrl) {
+            rawChannels.push({
+              title: currentTitle || `Match ${rawChannels.length + 1}`,
               url: `/?url=${encodeURIComponent(cleanUrl)}`
             });
           }
@@ -127,10 +126,21 @@ class CricXCrateUI extends HTMLElement {
         }
       }
 
-      if (this.channels.length > 0) {
-        this.CONFIG.streamManifest = this.channels[0].url;
-        this.CONFIG.streamTitle = this.channels[0].title;
+      this.channels = rawChannels.filter(ch => {
+        const isValidFormat = ch.url.includes("fancode") || ch.url.includes("m3u8");
+        const isNotExpired = !ch.title.toLowerCase().includes("ended") && !ch.title.toLowerCase().includes("highlights");
+        return isValidFormat && isNotExpired;
+      });
+
+      if (this.channels.length === 0) {
+        this.channels = [{
+          title: "Default Live Stream",
+          url: `/?url=${encodeURIComponent("https://dai-fancode.pages.dev/out/v1/ap-south-1/4249241_english_622056/ad-h264/index.m3u8")}`
+        }];
       }
+
+      this.CONFIG.streamManifest = this.channels[0].url;
+      this.CONFIG.streamTitle = this.channels[0].title;
     } catch (err) {
       this.channels = [{
         title: "Default Live Stream",
@@ -237,15 +247,14 @@ class CricXCrateUI extends HTMLElement {
         .hero-left h1 { font-family: 'Syne', sans-serif; font-size: clamp(28px, 5vw, 64px); line-height: 0.92; letter-spacing: -0.04em; font-weight: 900; text-transform: uppercase; }
         .hero-left h1 .accent-txt { color: var(--accent); background: linear-gradient(135deg, #00ffcc 0%, #0096ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
-        /* Custom Blended Dropdown Switcher */
-        .custom-dropdown-container { position: relative; display: inline-block; }
+        .custom-dropdown-container { position: relative; display: inline-block; z-index: 99999; }
         .custom-dropdown-trigger { display: inline-flex; align-items: center; gap: 10px; background: var(--bg-card); border: 1px solid var(--border-glass-bright); padding: 8px 16px; border-radius: 100px; backdrop-filter: blur(16px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); cursor: pointer; transition: all 0.25s ease; }
         .custom-dropdown-trigger:hover { border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow); }
         .custom-dropdown-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; }
         .custom-dropdown-value { font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 700; color: var(--text-main); max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .custom-dropdown-arrow { width: 10px; height: 10px; border-right: 2px solid var(--accent); border-bottom: 2px solid var(--accent); transform: rotate(45deg); transition: transform 0.3s ease; margin-left: 4px; }
         
-        .custom-dropdown-menu { position: absolute; right: 0; top: calc(100% + 10px); width: 320px; background: rgba(8, 13, 20, 0.95); border: 1px solid var(--border-glass-bright); backdrop-filter: blur(25px); border-radius: 16px; box-shadow: 0 25px 60px rgba(0,0,0,0.7); z-index: 200; opacity: 0; pointer-events: none; transform: translateY(-10px) scale(0.98); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); overflow: hidden; }
+        .custom-dropdown-menu { position: absolute; right: 0; top: calc(100% + 10px); width: 320px; background: rgba(8, 13, 20, 0.98); border: 1px solid var(--border-glass-bright); backdrop-filter: blur(25px); border-radius: 16px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); z-index: 99999; opacity: 0; pointer-events: none; transform: translateY(-10px) scale(0.98); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); overflow: hidden; }
         .custom-dropdown-menu.open { opacity: 1; pointer-events: all; transform: translateY(0) scale(1); }
         
         .custom-dropdown-item { padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--border-glass); cursor: pointer; font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 600; color: var(--text-muted); transition: all 0.2s ease; }
@@ -259,7 +268,7 @@ class CricXCrateUI extends HTMLElement {
 
         .track-separator-beam { width: 100%; height: 1px; background: linear-gradient(90deg, var(--accent) 0%, var(--border-glass) 45%, transparent 100%); margin-bottom: 18px; }
 
-        .player-rig-box { width: 100%; aspect-ratio: 16/9; position: relative; background: #000; overflow: hidden; border-radius: 18px; border: 1px solid var(--border-glass-bright); box-shadow: var(--player-shadow); }
+        .player-rig-box { width: 100%; aspect-ratio: 16/9; position: relative; background: #000; overflow: hidden; border-radius: 18px; border: 1px solid var(--border-glass-bright); box-shadow: var(--player-shadow); z-index: 1; }
         iframe#player { width: 100%; height: 100%; border: none; display: block; position: relative; z-index: 5; border-radius: inherit; }
         .player-rig-box.fs-active { position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100dvh !important; max-width: none !important; max-height: none !important; z-index: 9999999 !important; border-radius: 0 !important; border: none !important; background: #000 !important; }
         
@@ -331,7 +340,6 @@ class CricXCrateUI extends HTMLElement {
             <h1>FANCODE <span class="accent-txt">STREAM</span></h1>
           </div>
           
-          <!-- Custom Blended Dropdown Switcher UI -->
           <div class="custom-dropdown-container" id="dropdownContainer">
             <div class="custom-dropdown-trigger" id="dropdownTrigger">
               <div>
@@ -514,13 +522,30 @@ class CricXCrateUI extends HTMLElement {
             const retryBtn = document.getElementById('retryBtn');
             let playerInstance = null;
             
-            function initPlyrAndOrientation() {
+            function initPlyr(availableQualities, hlsInstance) {
               if (playerInstance) return;
+              const qualityOptions = {
+                default: availableQualities[0] || 0,
+                options: availableQualities,
+                forced: true,
+                onChange: (newQuality) => {
+                  if (newQuality === 0) {
+                    hlsInstance.currentLevel = -1;
+                  } else {
+                    hlsInstance.levels.forEach((level, index) => {
+                      if (level.height === newQuality) {
+                        hlsInstance.currentLevel = index;
+                      }
+                    });
+                  }
+                }
+              };
+
               playerInstance = new Plyr(video, { 
                 autoplay: true,
                 controls: ['play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
                 settings: ['quality', 'speed'],
-                fullscreen: { enabled: true, fallback: true, iosNative: true }
+                quality: availableQualities.length > 0 ? qualityOptions : undefined
               });
               
               playerInstance.on('playing', () => {
@@ -553,24 +578,9 @@ class CricXCrateUI extends HTMLElement {
               hls.loadSource(source);
               hls.attachMedia(video);
               
-              // Quality Selector Integration
               hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
-                initPlyrAndOrientation();
-                if(data.levels.length > 0) {
-                   const availableQualities = data.levels.map(l => l.height).sort((a, b) => b - a);
-                   playerInstance.options.quality = {
-                     default: availableQualities[0],
-                     options: availableQualities,
-                     forced: true,
-                     onChange: (newQuality) => {
-                       data.levels.forEach((level, index) => {
-                         if (level.height === newQuality) {
-                           hls.currentLevel = index;
-                         }
-                       });
-                     }
-                   };
-                }
+                const availableQualities = data.levels.map(l => l.height).filter(Boolean).sort((a, b) => b - a);
+                initPlyr(availableQualities, hls);
               });
               
               hls.on(Hls.Events.ERROR, function (event, data) {
@@ -594,7 +604,7 @@ class CricXCrateUI extends HTMLElement {
               });
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
               video.src = source;
-              video.addEventListener('loadedmetadata', () => initPlyrAndOrientation());
+              video.addEventListener('loadedmetadata', () => initPlyr([], null));
               video.addEventListener('error', () => {
                 spinner.style.display = 'none';
                 statusText.style.display = 'none';
